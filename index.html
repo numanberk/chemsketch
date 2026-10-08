@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ChemSketch – chemical drawing &amp; lab flowcharts</title>
+  <meta name="description" content="Free browser-based ChemDraw alternative: draw structures, reactions and mechanisms, build illustrated lab procedure flowcharts and export vector PDF.">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <header id="top">
+    <div class="brand"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M12 2.5l8.2 4.75v9.5L12 21.5l-8.2-4.75v-9.5z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 6l5.2 3M17.2 15L12 18M6.8 15V9" stroke="currentColor" stroke-width="1.5"/></svg><span>ChemSketch</span></div>
+    <nav id="menubar"></nav>
+    <div class="quick">
+      <button data-quick="undo" title="Undo (Ctrl+Z)">↶</button>
+      <button data-quick="redo" title="Redo (Ctrl+Y)">↷</button>
+      <span class="divider"></span>
+      <button data-quick="flowWizard" title="Build a lab procedure flowchart">Flowchart wizard</button>
+      <button data-quick="save" title="Save project (Ctrl+S)">Save</button>
+      <button data-quick="exportPDF" class="primary" title="Export PDF (Ctrl+P)">Export PDF</button>
+    </div>
+  </header>
+  <div id="elements" title="Quick elements"></div>
+  <main>
+    <aside id="palette"></aside>
+    <section id="center">
+      <div id="canvas-wrap"></div>
+      <footer id="statusbar">
+        <div id="pages"></div>
+        <span id="doc-title">Untitled</span>
+        <span id="status-msg"></span>
+        <span id="status-pos"></span>
+        <div class="zoom"><button id="zoom-out" title="Zoom out">−</button><span id="zoom-val">100%</span><button id="zoom-in" title="Zoom in">+</button><button id="zoom-fit" title="Fit page">Fit</button></div>
+      </footer>
+    </section>
+    <aside id="side">
+      <div class="tabs">
+        <button class="tab" data-panel="props">Properties</button>
+        <button class="tab" data-panel="lab">Lab equipment</button>
+        <button class="tab" data-panel="templates">Templates</button>
+        <button class="tab" data-panel="analysis">Analysis</button>
+      </div>
+      <div class="panel" id="panel-props"></div>
+      <div class="panel" id="panel-lab"></div>
+      <div class="panel" id="panel-templates"></div>
+      <div class="panel" id="panel-analysis"></div>
+    </aside>
+  </main>
+  <input type="file" id="file-open" accept=".json,.chemsketch,.mol,.sdf,.mdl,.smi,.smiles,.txt" hidden>
+  <input type="file" id="file-image" accept="image/*" hidden>
+  <div id="toast"></div>
+  <div id="loading">Loading ChemSketch…</div>
+
+  <script src="js/vendor/fonts.js"></script>
+  <script src="js/vendor/jspdf.umd.min.js"></script>
+  <script src="js/vendor/svg2pdf.umd.min.js"></script>
+  <script src="js/vendor/openchemlib.js"></script>
+  <script src="js/core.js"></script>
+  <script src="js/richtext.js"></script>
+  <script src="js/chem.js"></script>
+  <script src="js/apparatus.js"></script>
+  <script src="js/render.js"></script>
+  <script src="js/document.js"></script>
+  <script src="js/templates.js"></script>
+  <script src="js/editor.js"></script>
+  <script src="js/export.js"></script>
+  <script src="js/flowchart.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
