@@ -499,7 +499,16 @@
     drag = null;
     render();
     CS.emit('selection');
+    // the canvas is re-rendered on every click, so native dblclick never fires: detect it here
+    if (!d.moved) {
+      var now = Date.now();
+      if (lastClick && now - lastClick.t < 450 && Math.hypot(ev.clientX - lastClick.x, ev.clientY - lastClick.y) < 6) {
+        lastClick = null;
+        if (state.tool === 'select') onDbl(ev);
+      } else lastClick = { t: now, x: ev.clientX, y: ev.clientY };
+    } else lastClick = null;
   }
+  var lastClick = null;
   function onDbl(ev) {
     var p = toPage(ev), page = CS.page();
     var k = hitAny(p);
@@ -1213,7 +1222,6 @@
     svg.addEventListener('pointermove', onMove);
     svg.addEventListener('pointerup', onUp);
     svg.addEventListener('pointercancel', onUp);
-    svg.addEventListener('dblclick', onDbl);
     svg.addEventListener('wheel', onWheel, { passive: false });
     svg.addEventListener('pointerleave', function () { if (!drag) { state.hover = null; state.preview = null; renderOverlay(); } });
     window.addEventListener('keydown', onKey);
