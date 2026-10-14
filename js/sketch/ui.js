@@ -37,6 +37,7 @@
     plus: svgIcon('<circle cx="12" cy="12" r="8"/><path d="M12 8v8M8 12h8"/>'),
     minus: svgIcon('<circle cx="12" cy="12" r="8"/><path d="M8 12h8"/>'),
     radical: svgIcon('<text x="9" y="17" font-size="13" text-anchor="middle" fill="currentColor" stroke="none" font-family="Arial">C</text><circle cx="17" cy="7" r="2" fill="currentColor"/>'),
+    carbene: svgIcon('<text x="14" y="18" font-size="13" text-anchor="middle" fill="currentColor" stroke="none" font-family="Arial">C</text><circle cx="5" cy="9.5" r="1.4" fill="currentColor"/><circle cx="5" cy="14.5" r="1.4" fill="currentColor"/>'),
     lonepair: svgIcon('<text x="12" y="18" font-size="13" text-anchor="middle" fill="currentColor" stroke="none" font-family="Arial">O</text><circle cx="9.5" cy="4.5" r="1.4" fill="currentColor"/><circle cx="14.5" cy="4.5" r="1.4" fill="currentColor"/>'),
     text: svgIcon('<path d="M5 5h14M12 5v15M9 20h6"/>'),
     'a-forward': svgIcon('<path d="M3 12h15"/><path d="M14 8l6 4-6 4z" fill="currentColor"/>'),
@@ -93,7 +94,8 @@
     { id: 'element', icon: 'element', tip: 'Element / label tool – pick from the periodic table. Tip: hover an atom and press N, O, S, Cl (L), Br (B)…' },
     { id: 'charge:+', icon: 'plus', tip: 'Positive charge (click atom). Or hover + press +' },
     { id: 'charge:-', icon: 'minus', tip: 'Negative charge (click atom). Or hover + press -' },
-    { id: 'radical', icon: 'radical', tip: 'Radical: click an atom for one dot, again for two (carbene/diradical), again to remove' },
+    { id: 'radical', icon: 'radical', tip: 'Radical: click an atom for one dot, again for two (diradical), again to remove' },
+    { id: 'carbene', icon: 'carbene', tip: 'Carbene: click a carbon for singlet :C, again for triplet ·C·, again to remove. Or hover + press :' },
     { id: 'lonepair', icon: 'lonepair', tip: 'Lone pair (click repeatedly to add more)' },
     { h: 'Arrows' },
     { id: 'arrow:forward', icon: 'a-forward', tip: 'Reaction arrow (A)', key: 'a' },
@@ -857,7 +859,7 @@
       html += '<h4>' + CS.esc(g.name) + '</h4><div class="thumbs">';
       g.items.forEach(function (it, ii) {
         var svg = '';
-        try { svg = CS.Templates.thumbSVG(CS.Templates.fromSmiles(it[1]), 56); } catch (e) { svg = ''; }
+        try { svg = CS.Templates.thumbSVG(CS.Templates.fromSmiles(it[1], it[2]), 56); } catch (e) { svg = ''; }
         html += '<button class="thumb" data-g="' + gi + '" data-i="' + ii + '" title="' + CS.esc(it[0] + '  ' + it[1]) + '">' + svg + '<span>' + CS.esc(it[0]) + '</span></button>';
       });
       html += '</div>';
@@ -871,7 +873,7 @@
       $$('.thumb', el).forEach(function (x) { x.classList.remove('active'); });
       b.classList.add('active');
       var it = CS.Templates.GROUPS[+b.getAttribute('data-g')].items[+b.getAttribute('data-i')];
-      state.template = function () { return CS.Templates.fromSmiles(it[1]); };
+      state.template = function () { return CS.Templates.fromSmiles(it[1], it[2]); };
       setTool('template');
     });
   }
@@ -962,6 +964,7 @@
       var a0 = atoms[0];
       html += '<h4>Atom</h4>' + field('Element / label', '<input data-key="atom.label" value="' + CS.esc(a0.label || a0.el) + '">') +
         '<div class="grid2">' + field('Charge', num('atom.charge', a0.charge || 0, 1)) + field('Lone pairs', num('atom.lonePairs', a0.lonePairs || 0, 1, 0)) + '</div>' +
+        (/^(C|Si)$/.test(a0.el) && !a0.label && !a0.charge ? field('Carbene', sel('atom.carbene', Chem.carbeneState(a0) || 'none', [['none', 'No'], ['singlet', 'Singlet :C (lone pair)'], ['triplet', 'Triplet ·C· (two radicals)']])) : '') +
         chk('atom.radical', a0.radical, 'Radical') + chk('atom.chargeCircle', a0.chargeCircle, 'Circled charge') + chk('atom.showC', a0.showC, 'Show carbon label') +
         field('Colour', colorRow('atom.color', a0.color || '#000000'));
     }
@@ -1067,7 +1070,8 @@
         if (k === 'label') {
           var v = String(value).trim();
           if (Chem.isElement(v)) { a.el = v; delete a.label; } else if (v) a.label = v;
-        } else if (k === 'charge' || k === 'lonePairs') { var n = parseInt(value, 10) || 0; if (n) a[k] = n; else delete a[k]; }
+        } else if (k === 'carbene') { if (/^(C|Si)$/.test(a.el) && !a.label) Chem.setCarbene(a, value === 'none' ? null : value); }
+        else if (k === 'charge' || k === 'lonePairs') { var n = parseInt(value, 10) || 0; if (n) a[k] = n; else delete a[k]; }
         else if (typeof value === 'boolean') { if (value) a[k] = k === 'radical' ? 1 : true; else delete a[k]; }
         else a[k] = value;
       });
@@ -1199,7 +1203,7 @@
   }
 
   var SHORTCUTS_HTML = '<div class="shortcuts"><div><h4>Tools</h4><p><kbd>V</kbd> select · <kbd>E</kbd> eraser · <kbd>T</kbd> text · <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> bonds · <kbd>W</kbd> wedge · <kbd>H</kbd> hash · <kbd>C</kbd> chain · <kbd>R</kbd> ring · <kbd>B</kbd> benzene · <kbd>A</kbd> arrow · <kbd>L</kbd> line · <kbd>F</kbd> fit page · <kbd>Esc</kbd> select tool</p>' +
-    '<h4>Hover an atom and press</h4><p><kbd>C</kbd><kbd>N</kbd><kbd>O</kbd><kbd>S</kbd><kbd>P</kbd><kbd>F</kbd><kbd>H</kbd><kbd>I</kbd> element · <kbd>L</kbd> Cl · <kbd>B</kbd> Br · <kbd>M</kbd> Me · <kbd>+</kbd>/<kbd>-</kbd> charge · <kbd>.</kbd> radical · <kbd>Enter</kbd> type a label · <kbd>Del</kbd> delete</p>' +
+    '<h4>Hover an atom and press</h4><p><kbd>C</kbd><kbd>N</kbd><kbd>O</kbd><kbd>S</kbd><kbd>P</kbd><kbd>F</kbd><kbd>H</kbd><kbd>I</kbd> element · <kbd>L</kbd> Cl · <kbd>B</kbd> Br · <kbd>M</kbd> Me · <kbd>+</kbd>/<kbd>-</kbd> charge · <kbd>.</kbd> radical · <kbd>:</kbd> carbene · <kbd>Enter</kbd> type a label · <kbd>Del</kbd> delete</p>' +
     '<h4>Hover a bond and press</h4><p><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> order · <kbd>W</kbd> wedge · <kbd>H</kbd> hash · <kbd>Y</kbd> wavy · <kbd>B</kbd> bold · <kbd>D</kbd> dashed · <kbd>Del</kbd> delete</p></div>' +
     '<div><h4>Editing</h4><p><kbd>Ctrl+Z</kbd> undo · <kbd>Ctrl+Y</kbd> redo · <kbd>Ctrl+C/X/V</kbd> copy/cut/paste (paste SMILES or MOL text too) · <kbd>Ctrl+D</kbd> duplicate · <kbd>Ctrl+A</kbd> select all · <kbd>Ctrl+G</kbd> group · <kbd>Ctrl+Shift+G</kbd> ungroup · arrows nudge (Shift ×10) · Alt+drag copies · Shift+click adds to selection · double-click edits text/labels · <kbd>Ctrl+K</kbd> clean structure</p>' +
     '<h4>View & files</h4><p><kbd>Ctrl+wheel</kbd> zoom · wheel pans · <kbd>Space</kbd>+drag pan · <kbd>Ctrl+0</kbd> fit · <kbd>Ctrl+S</kbd> save · <kbd>Ctrl+O</kbd> open · <kbd>Ctrl+P</kbd> export PDF</p>' +

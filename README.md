@@ -44,17 +44,18 @@ multiple pages and its own PDF/SVG/PNG/MOL export.
 - Chain tool: drag out a zig-zag carbon chain; it shows the atom count while you drag.
 - 3–8 membered rings, benzene and a cyclohexane chair. Click a bond to fuse a ring, or click an atom for a spiro ring.
 - ChemDraw-style hover shortcuts:
-  - Over an atom: `N` `O` `S` `P` `F` `H` `I`, `L` (Cl), `B` (Br), `M` (Me), `+`/`-` for charge, `.` for a radical.
+  - Over an atom: `N` `O` `S` `P` `F` `H` `I`, `L` (Cl), `B` (Br), `M` (Me), `+`/`-` for charge, `.` for a radical, `:` for a carbene.
   - Over a bond: `1` `2` `3`, `W` (wedge), `H` (hash), `Y` (wavy), `B` (bold), `D` (dashed).
 - Labels and groups: double-click an atom and type `OMe`, `CO2Et`, `NHBoc`, `Ph` and so on. Labels flip automatically (`MeO`, `HO`, `EtO2C`) when the bond comes from the right.
 - Automatic implicit hydrogens, charges (optionally circled), radicals and lone pairs.
+- Carbenes: the carbene tool (or `:` over an atom) makes a carbon a singlet carbene (:CCl₂, lone pair) and a second click makes it a triplet (·CH₂·, two unpaired electrons). Hydrogen counts, formula, mass and SMILES follow, and the atom's properties panel can switch the state too.
 - Valence errors are boxed in red on screen. The box is not exported.
 - Periodic table and abbreviation picker.
 - Clean up structure (2D layout), and R/S stereo labels (CIP).
 - Insert from SMILES, MOL file import/export, copy as SMILES. You can paste SMILES or MOL text straight onto the canvas.
 - Name → Structure and Structure → Name, looked up on PubChem (needs internet).
 - Analysis panel: formula, MW, exact mass, m/z, elemental analysis, cLogP, cLogS, TPSA, H-bond donors/acceptors, rotatable bonds and stereocentres. One click inserts the formula and MW as text.
-- About 100 templates: rings, heteroaromatics, amino acids, sugars and nucleobases, solvents and reagents, common drugs.
+- About 100 templates: rings, heteroaromatics, amino acids, sugars and nucleobases, solvents and reagents, common drugs, and carbenes with their precursors (CCl₂, CBr₂, CF₂, methylene, phenyl- and diphenylcarbene, an NHC, diazo compounds, chloroform).
 - Drawing styles: Default, ACS Document 1996, RSC/Wiley and Presentation. Changing the style can rescale existing drawings.
 
 #### Arrows, text and shapes

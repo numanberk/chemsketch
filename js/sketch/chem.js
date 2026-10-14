@@ -55,13 +55,15 @@
   };
   var GROUP = { B: 13, Al: 13, C: 14, Si: 14, Ge: 14, Sn: 14, N: 15, P: 15, As: 15, O: 16, S: 16, Se: 16, Te: 16, F: 17, Cl: 17, Br: 17, I: 17, H: 1, Li: 1, Na: 1, K: 1, Mg: 2, Ca: 2, Zn: 2 };
 
-  function valences(el, charge, radical) {
+  // lonePairs only matter for neutral carbon/silicon: a lone pair there makes a (singlet) carbene,
+  // :CR2, with two fewer bonds. Lone pairs drawn on N, O, halogens or carbanions are just shown.
+  function valences(el, charge, radical, lonePairs) {
     var v = VALENCE[el];
     if (!v) return null;
     var g = GROUP[el], c = charge || 0;
     var out = v.map(function (x) {
       var r = x;
-      if (g === 14) r = x - Math.abs(c);
+      if (g === 14) r = c ? x - Math.abs(c) : x - 2 * (lonePairs || 0);
       else if (g === 13) r = x - c;
       else if (g >= 15) r = x + c;
       else r = x - Math.abs(c); // H, metals
@@ -165,10 +167,29 @@
     return g.adj.get(atom.id).reduce(function (s, b) { return s + (b.order || 1); }, 0);
   }
 
+  // drawings from older versions marked singlet carbenes as lonePairs 1 + radical 2 + lpCarbene
+  function atomValences(atom) {
+    return valences(atom.el, atom.charge, atom.lpCarbene ? 0 : atom.radical, atom.lonePairs);
+  }
+  // 'singlet' (:C, lone pair), 'triplet' (·C·, two radical electrons) or null
+  function carbeneState(atom) {
+    if (atom.label || atom.charge || (atom.el !== 'C' && atom.el !== 'Si')) return null;
+    if (atom.lonePairs || atom.lpCarbene) return 'singlet';
+    if (atom.radical === 2) return 'triplet';
+    return null;
+  }
+  function setCarbene(atom, state) {
+    delete atom.lpCarbene;
+    delete atom.hCount;
+    if (state === 'singlet') { atom.lonePairs = 1; delete atom.radical; }
+    else if (state === 'triplet') { atom.radical = 2; delete atom.lonePairs; }
+    else { delete atom.lonePairs; delete atom.radical; }
+  }
+
   function implicitH(g, atom) {
     if (atom.label) return 0;
     if (atom.hCount != null) return atom.hCount;
-    var vs = valences(atom.el, atom.charge, atom.radical);
+    var vs = atomValences(atom);
     if (!vs) return 0;
     var sum = bondOrderSum(g, atom);
     for (var i = 0; i < vs.length; i++) if (vs[i] >= sum) return vs[i] - sum;
@@ -176,7 +197,7 @@
   }
   function valenceError(g, atom) {
     if (atom.label) return false;
-    var vs = valences(atom.el, atom.charge, atom.radical);
+    var vs = atomValences(atom);
     if (!vs) return false;
     return bondOrderSum(g, atom) > Math.max.apply(null, vs);
   }
@@ -312,7 +333,9 @@
       mol.setAtomY(i, a.y / L);
       if (a.charge) mol.setAtomCharge(i, a.charge);
       if (a.el === 'D') mol.setAtomMass(i, 2);
-      if (a.radical) mol.setAtomRadical(i, a.lpCarbene ? O.Molecule.cAtomRadicalStateS : a.radical === 2 ? O.Molecule.cAtomRadicalStateT : O.Molecule.cAtomRadicalStateD);
+      var cs = carbeneState(a);
+      if (cs) mol.setAtomRadical(i, cs === 'singlet' ? O.Molecule.cAtomRadicalStateS : O.Molecule.cAtomRadicalStateT);
+      else if (a.radical) mol.setAtomRadical(i, a.radical === 2 ? O.Molecule.cAtomRadicalStateT : O.Molecule.cAtomRadicalStateD);
       map.set(id, i);
     });
     page.bonds.forEach(function (b) {
@@ -363,7 +386,7 @@
       var rad = mol.getAtomRadical(i);
       if (rad === O.Molecule.cAtomRadicalStateD) atom.radical = 1;
       else if (rad === O.Molecule.cAtomRadicalStateT) atom.radical = 2;
-      else if (rad === O.Molecule.cAtomRadicalStateS) { atom.lonePairs = 1; atom.radical = 2; atom.lpCarbene = true; }
+      else if (rad === O.Molecule.cAtomRadicalStateS) atom.lonePairs = 1;
       atoms.push(atom);
     }
     for (k = 0; k < nb; k++) {
@@ -422,6 +445,8 @@
     SYMBOLS: SYMBOLS, WEIGHTS: WEIGHTS, MONO: MONO, Z: Z, COLORS: COLORS, ABBR: ABBR,
     ptPos: ptPos,
     valences: valences,
+    carbeneState: carbeneState,
+    setCarbene: setCarbene,
     graph: graph,
     other: other,
     implicitH: implicitH,

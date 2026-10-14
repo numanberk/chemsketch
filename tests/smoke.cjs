@@ -133,6 +133,24 @@ function check(cond, msg) {
   check(await sketch.evaluate(() => CS.page().atoms.length + CS.page().objects.length) === 0, 'ChemSketch starts with a blank page');
   await sketch.evaluate(() => CS.UI.importText('c1ccccc1O'));
   check(await sketch.evaluate(() => CS.Chem.analysis(CS.page(), CS.page().atoms.map((a) => a.id)).formula) === 'C6H6O', 'SMILES import and formula');
+
+  // ---- carbenes: the carbene tool turns the carbon of Cl–C–Cl into :CCl2, then ·CCl2·
+  await sketch.evaluate(() => { CS.Actions.selectAll(); CS.Actions.del(); CS.UI.importText('ClCCl'); });
+  await sketch.click('[data-tool="carbene"]');
+  const cpt = await sketch.evaluate(() => {
+    const a = CS.page().atoms.find((x) => x.el === 'C'), r = document.querySelector('svg.canvas').getBoundingClientRect();
+    return { x: (a.x - CS.state.pan.x) * CS.state.zoom + r.left, y: (a.y - CS.state.pan.y) * CS.state.zoom + r.top };
+  });
+  const carbene = () => sketch.evaluate(() => {
+    const p = CS.page(), c = p.atoms.find((x) => x.el === 'C');
+    return CS.Chem.carbeneState(c) + ' ' + CS.Chem.analysis(p, p.atoms.map((x) => x.id)).formula;
+  });
+  await sketch.mouse.click(cpt.x, cpt.y);
+  const c1 = await carbene();
+  await sketch.mouse.click(cpt.x, cpt.y);
+  const c2 = await carbene();
+  check(c1 === 'singlet CCl2' && c2 === 'triplet CCl2', 'carbene tool gives singlet and triplet CCl2 (' + c1 + ', ' + c2 + ')');
+
   const n = await sketch.evaluate(async () => (await CS.Export.exportPDF(CS.state.doc.pages, {})).size);
   check(n > 1000, 'ChemSketch PDF export');
 

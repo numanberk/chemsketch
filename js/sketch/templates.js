@@ -47,16 +47,29 @@
         ['Cholesterol', 'C[C@H](CCCC(C)C)[C@H]1CC[C@H]2[C@@H]3CC=C4C[C@@H](O)CC[C@]4(C)[C@H]3CC[C@]12C'],
         ['Menthol', 'CC(C)[C@@H]1CC[C@@H](C)C[C@H]1O'], ['Limonene', 'CC1=CCC(CC1)C(C)=C'], ['Glycerol', 'OCC(O)CO']
       ]
+    },
+    {
+      // third item: the carbene state given to the divalent carbon ('singlet' :C or 'triplet' ·C·)
+      name: 'Carbenes', items: [
+        ['Methylene (singlet)', '[CH2]', 'singlet'], ['Methylene (triplet)', '[CH2]', 'triplet'],
+        ['Dichlorocarbene', '[C](Cl)Cl', 'singlet'], ['Dibromocarbene', '[C](Br)Br', 'singlet'], ['Difluorocarbene', '[C](F)F', 'singlet'],
+        ['Phenylcarbene', '[CH]c1ccccc1', 'triplet'], ['Diphenylcarbene', '[C](c1ccccc1)c1ccccc1', 'triplet'],
+        ['NHC (IMe)', 'CN1C=CN(C)[C]1', 'singlet'],
+        ['Diazomethane', 'C=[N+]=[N-]'], ['Ethyl diazoacetate', 'CCOC(=O)C=[N+]=[N-]'],
+        ['Chloroform', 'ClC(Cl)Cl'], ['Diiodomethane', 'ICI'], ['7,7-Dichloronorcarane', 'ClC1(Cl)C2CCCCC12']
+      ]
     }
   ];
 
   var cache = new Map();
-  function fragmentFromSmiles(smi) {
+  // carbene: optional 'singlet' / 'triplet' for the divalent carbons (SMILES cannot tell them apart)
+  function fragmentFromSmiles(smi, carbene) {
     if (!CS.Chem.oclReady()) throw new Error('OpenChemLib not loaded');
-    var key = smi + '|' + CS.settings().bondLength;
+    var key = smi + '|' + (carbene || '') + '|' + CS.settings().bondLength;
     if (!cache.has(key)) {
       var mol = CS.Chem.smilesToMol(smi);
       var r = CS.Chem.fromOCL(mol, 0, 0);
+      if (carbene) r.atoms.forEach(function (a) { if (CS.Chem.carbeneState(a)) CS.Chem.setCarbene(a, carbene); });
       cache.set(key, { atoms: r.atoms, bonds: r.bonds, objects: [] });
     }
     return CS.clone(cache.get(key));

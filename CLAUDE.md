@@ -38,6 +38,9 @@ tests/smoke.cjs                             end-to-end smoke test (Playwright)
 - **ChemSketch** (`js/sketch/`) is ES5-style IIFEs on the global `CS` namespace:
   - `CS.Text`: rich text layout, measured with canvas.
   - `CS.Chem`: elements, valence, formula/mass, and the OpenChemLib bridge (`window.OCL`).
+    Carbenes: a singlet is `lonePairs: 1` on a C/Si atom and a triplet is `radical: 2`; each removes two
+    from the valence. Use `Chem.carbeneState()` / `Chem.setCarbene()`. SMILES cannot tell the two
+    states apart, so templates give the state as a third item.
   - `CS.Apparatus`: glassware drawings and presets.
   - `CS.R`: SVG rendering and bounding boxes.
   - `CS.Doc`, `CS.state`, `CS.History`, `CS.commit()`: the model, the current state and undo.

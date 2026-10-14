@@ -22,7 +22,7 @@
       tokens = Chem.labelTokens(atom.label);
       left = deg > 0 && sumdx > 0.2 * L && tokens.length > 1;
     } else {
-      var visible = atom.el !== 'C' || deg === 0 || atom.showC || atom.isotope;
+      var visible = atom.el !== 'C' || deg === 0 || atom.showC || atom.isotope || !!Chem.carbeneState(atom);
       if (!visible) return null;
       var h = Chem.implicitH(g, atom);
       tokens = [(atom.isotope ? '' : '') + atom.el];

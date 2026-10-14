@@ -512,7 +512,7 @@
     updateCursor(p);
   }
   function hoverFor(tool, p) {
-    if (/^(bond|chain|ring|element|charge|eraser|text|template|radical|lonepair|label)$/.test(tool)) {
+    if (/^(bond|chain|ring|element|charge|eraser|text|template|radical|lonepair|label|carbene)$/.test(tool)) {
       var a = hitAtom(p);
       if (a) return 'a:' + a.id;
       var b = hitBond(p);
@@ -899,6 +899,25 @@
       CS.commit();
     }
   };
+  // carbene: click a carbon to cycle singlet :C -> triplet ·C· -> normal; click empty space for :CH2
+  function cycleCarbene(a) {
+    if (!/^(C|Si)$/.test(a.el) || a.label || a.charge) { a.el = 'C'; delete a.label; delete a.charge; }
+    var cur = Chem.carbeneState(a);
+    Chem.setCarbene(a, cur === 'singlet' ? 'triplet' : cur === 'triplet' ? null : 'singlet');
+    var now = Chem.carbeneState(a);
+    CS.emit('tip', now === 'singlet' ? 'Singlet carbene (:C, lone pair). Click again for triplet.' : now === 'triplet' ? 'Triplet carbene (·C·, two unpaired electrons). Click again to make it a normal carbon.' : 'Normal carbon. Click again for a singlet carbene.');
+  }
+  TOOLS.carbene = {
+    up: function (p, ev, page, d) {
+      var a = hitAtom(d.start);
+      if (!a) {
+        a = D.addAtom(page, d.start.x, d.start.y, 'C');
+        Chem.setCarbene(a, 'singlet');
+      } else cycleCarbene(a);
+      CS.commit();
+    }
+  };
+
   TOOLS.radical = {
     up: function (p, ev, page, d) {
       var a = hitAtom(d.start);
@@ -1198,6 +1217,7 @@
       if (key === '+' || key === '=') { hv.charge = (hv.charge || 0) + 1; if (!hv.charge) delete hv.charge; CS.commit(); render(); ev.preventDefault(); return; }
       if (key === '-') { hv.charge = (hv.charge || 0) - 1; if (!hv.charge) delete hv.charge; CS.commit(); render(); ev.preventDefault(); return; }
       if (key === '.') { hv.radical = hv.radical ? 0 : 1; if (!hv.radical) delete hv.radical; CS.commit(); render(); ev.preventDefault(); return; }
+      if (key === ':') { cycleCarbene(hv); CS.commit(); render(); ev.preventDefault(); return; }
       if (key === 'Enter') { editAtomLabel(hv); ev.preventDefault(); return; }
       if (/^[1-9]$/.test(key) && state.tool !== 'select') { /* fallthrough to tool keys */ }
       if (key === 'Delete' || key === 'Backspace') { D.removeKeys(page, [state.hover]); state.hover = null; CS.commit(); render(); ev.preventDefault(); return; }
