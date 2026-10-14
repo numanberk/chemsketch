@@ -468,31 +468,31 @@
       id: 'reflux', name: 'Reflux in water bath', w: 130, h: 144,
       items: [{ k: 'hotplate', x: 0, y: 126 }, { k: 'waterbath', x: 10, y: 86, opts: { level: 0.7 } },
         { k: 'rbf', x: 45, y: 65, opts: { level: 0.3 } }, { k: 'condenser', x: 46.5, y: 0 }],
-      callouts: [{ text: 'condenser', ax: 70, ay: 8, tx: 160, ty: 8 }, { text: 'water bath, 40 °C', ax: 120, ay: 100, tx: 160, ty: 100 }]
+      callouts: [{ text: 'condenser', ax: 70, ay: 8, tx: 160, ty: 8 }, { text: 'water bath', ax: 120, ay: 100, tx: 160, ty: 100 }]
     },
     {
       id: 'addition', name: 'Addition funnel + reflux', w: 130, h: 147,
       items: [{ k: 'hotplate', x: 0, y: 129 }, { k: 'waterbath', x: 10, y: 89, opts: { level: 0.7 } },
         { k: 'twoneck', x: 40, y: 65, opts: { level: 0.35 } }, { k: 'condenser', x: 36.5, y: 0 }, { k: 'dropfunnel', x: 64, y: 27, opts: { level: 0.6 } }],
-      callouts: [{ text: 'NaOH solution', ax: 84, ay: 33, tx: 160, ty: 22 }]
+      callouts: [{ text: 'addition funnel', ax: 84, ay: 33, tx: 160, ty: 22 }]
     },
     {
       id: 'pour', name: 'Adding liquid from a tube', w: 130, h: 96,
       items: [{ k: 'hotplate', x: 0, y: 78 }, { k: 'waterbath', x: 10, y: 38, opts: { level: 0.7 } },
         { k: 'rbf', x: 45, y: 17, opts: { level: 0.35, stir: true } }, { k: 'testtube', x: 82, y: -18, rot: 60, opts: { level: 0.35 } }],
-      callouts: [{ text: 'chloroform', ax: 104, ay: -6, tx: 160, ty: -10 }]
+      callouts: [{ text: 'solvent', ax: 104, ay: -6, tx: 160, ty: -10 }]
     },
     {
       id: 'extraction', name: 'Separatory funnel extraction', w: 150, h: 150,
       items: [{ k: 'stand', x: 0, y: 0, opts: { clamp: 0.4 } }, { k: 'sepfunnel', x: 34.75, y: -2, s: 1.25, opts: { level: 0.3, level2: 0.72 } },
         { k: 'erlenmeyer', x: 34, y: 91, opts: { level: 0.15 } }],
-      callouts: [{ text: 'water phase', ax: 66, ay: 40, tx: 160, ty: 30 }, { text: 'organic phase', ax: 61, ay: 56, tx: 160, ty: 45 }]
+      callouts: [{ text: 'aqueous phase', ax: 66, ay: 40, tx: 160, ty: 30 }, { text: 'organic phase', ax: 61, ay: 56, tx: 160, ty: 45 }]
     },
     {
       id: 'washdry', name: 'Wash in funnel & dry over solid', w: 150, h: 150,
       items: [{ k: 'stand', x: 0, y: 0, opts: { clamp: 0.4 } }, { k: 'sepfunnel', x: 34.75, y: -2, s: 1.25, opts: { level: 0.3, level2: 0.72 } },
         { k: 'erlenmeyer', x: 96, y: 91, opts: { level: 0.12, solid: true } }],
-      callouts: [{ text: 'NaHCO_3', ax: 66, ay: 40, tx: 160, ty: 32 }, { text: 'CaCl_2', ax: 134, ay: 142, tx: 160, ty: 136 }]
+      callouts: [{ text: 'wash solution', ax: 66, ay: 40, tx: 160, ty: 32 }, { text: 'drying agent', ax: 134, ay: 142, tx: 160, ty: 136 }]
     },
     {
       id: 'rotavap', name: 'Rotary evaporation', w: 150, h: 112,

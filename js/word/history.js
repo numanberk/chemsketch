@@ -39,9 +39,8 @@ const History = (() => {
     return { html: serialize(), draws: JSON.stringify(DRAW), caret: caretOffset() };
   }
   function updateButtons() {
-    const u = $('#rib [data-cmd="undo"]'), r = $('#rib [data-cmd="redo"]');
-    if (u) u.disabled = idx <= 0;
-    if (r) r.disabled = idx >= stack.length - 1;
+    $$('[data-cmd="undo"]').forEach((u) => (u.disabled = idx <= 0));
+    $$('[data-cmd="redo"]').forEach((r) => (r.disabled = idx >= stack.length - 1));
   }
 
   // record the current state as a new step (no-op when nothing changed)

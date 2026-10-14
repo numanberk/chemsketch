@@ -1,6 +1,6 @@
 'use strict';
-/* Drawing areas in the document. Each area stores a ChemSketch document (one page the size of
-   the area) and is edited in the full ChemSketch editor, which runs in a frame (../index.html?embed=1).
+/* Drawing areas in the document (Insert → Structure / Flowchart). Each area stores a ChemSketch document (one page the size of
+   the area) and is edited in the full ChemSketch editor, which runs in a frame (sketch.html?embed=1).
    ChemWord renders the drawings itself with the same ChemSketch engine, so the page, the PDF and
    the Word file all show exactly what was drawn. Drawings saved by older ChemWord versions are
    converted on load. */
@@ -176,111 +176,19 @@ function rebuildFigures() {
   });
 }
 
-function paperXY(e) {
-  const r = paper.getBoundingClientRect();
-  return { x: (e.clientX - r.left) / ZOOM, y: (e.clientY - r.top) / ZOOM };
-}
-function lineH() {
-  const p = document.createElement('p');
-  p.innerHTML = '<br>';
-  ed.appendChild(p);
-  const h = p.offsetHeight + parseFloat(getComputedStyle(p).marginBottom);
-  p.remove();
-  return h || 27;
-}
-const flowY = (y) => {
-  const p = Math.max(0, Math.floor(y / PP));
-  return p * CH + Math.max(0, Math.min(CH, y - p * PP - MT));
-};
-
-// put a new drawing area where the user dragged the box (blank lines fill the gap, at most 12)
-function insertChemArea(r) {
-  History.flush();
-  const ml = Math.round(Math.max(0, Math.min(CW - 60, r.x - 96)));
-  const w = Math.round(Math.max(60, Math.min(CW - ml, r.w))), h = Math.round(Math.max(40, Math.min(CH - 20, r.h)));
+// Insert a drawing area at the caret (like Word's Insert tab) and open the editor in it.
+// kind: 'structure' or 'flowchart' (opens the flowchart wizard in a page-tall area)
+function insertDrawing(kind) {
+  const w = CW, h = kind === 'flowchart' ? CH - 40 : 200;
   const id = 'c' + Math.random().toString(36).slice(2, 9);
   DRAW[id] = newDrawing(w, h);
-  const f = document.createElement('figure');
-  f.className = 'chem empty';
-  f.setAttribute('contenteditable', 'false');
-  f.dataset.id = id;
-  f.style.cssText = `width:${w}px;height:${h}px;margin-left:${ml}px`;
+  insertBlock(`<figure class="chem empty" contenteditable="false" data-id="${id}" style="width:${w}px;height:${h}px;margin-left:0px"></figure>`);
+  const f = ed.querySelector(`figure.chem[data-id="${id}"]`);
   buildFig(f);
-  clearPB();
-  const pt = paper.getBoundingClientRect().top;
-  let placed = false;
-  for (const k of ed.children) {
-    const kr = k.getBoundingClientRect(), t = (kr.top - pt) / ZOOM, b = (kr.bottom - pt) / ZOOM;
-    if (b > r.y) {
-      if (r.y < (t + b) / 2) k.before(f); else k.after(f);
-      placed = true;
-      break;
-    }
-  }
-  if (!placed) {
-    const last = ed.lastElementChild;
-    const lb = last ? (last.getBoundingClientRect().bottom - pt) / ZOOM : MT;
-    const n = Math.max(0, Math.min(12, Math.floor((flowY(r.y) - flowY(lb)) / lineH())));
-    const fr = document.createDocumentFragment();
-    for (let i = 0; i < n; i++) {
-      const p = document.createElement('p');
-      p.innerHTML = '<br>';
-      fr.appendChild(p);
-    }
-    fr.appendChild(f);
-    ed.appendChild(fr);
-  }
-  if (!f.nextElementSibling || f.nextElementSibling.tagName === 'FIGURE') {
-    const p = document.createElement('p');
-    p.innerHTML = '<br>';
-    f.after(p);
-  }
   reflow();
-  save();
-  History.record();
-  toast('Drawing area added. Click it to draw.');
+  f.scrollIntoView({ block: 'nearest' });
+  openDrawing(f, { isNew: true, wizard: kind === 'flowchart' });
 }
-
-/* area-select mode: drag a box on the page */
-const area = $('#area'), arect = $('#arect');
-let AR = null;
-function setAreaMode(on) {
-  area.hidden = !on;
-  $('#bChem').setAttribute('aria-pressed', on);
-  if (on) toast('Drag a box on the page where the drawing should go. Esc cancels.', 3500);
-}
-$('#bChem').onclick = () => setAreaMode(area.hidden);
-area.addEventListener('pointerdown', (e) => {
-  e.preventDefault();
-  area.setPointerCapture(e.pointerId);
-  const p = paperXY(e);
-  AR = { s: p, p };
-  arect.hidden = false;
-  drawAR();
-});
-area.addEventListener('pointermove', (e) => {
-  if (!AR) return;
-  AR.p = paperXY(e);
-  drawAR();
-});
-function drawAR() {
-  const x = Math.min(AR.s.x, AR.p.x), y = Math.min(AR.s.y, AR.p.y);
-  Object.assign(arect.style, { left: x + 'px', top: y + 'px', width: Math.abs(AR.p.x - AR.s.x) + 'px', height: Math.abs(AR.p.y - AR.s.y) + 'px' });
-}
-area.addEventListener('pointerup', () => {
-  if (!AR) return;
-  const a = AR;
-  AR = null;
-  arect.hidden = true;
-  setAreaMode(false);
-  let x = Math.min(a.s.x, a.p.x), y = Math.min(a.s.y, a.p.y), w = Math.abs(a.p.x - a.s.x), h = Math.abs(a.p.y - a.s.y);
-  if (w < 20 || h < 20) { w = 360; h = 170; x = a.s.x; y = a.s.y; }
-  insertChemArea({ x, y, w, h });
-});
-area.addEventListener('pointercancel', () => { AR = null; arect.hidden = true; });
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && !area.hidden) { setAreaMode(false); AR = null; arect.hidden = true; }
-});
 
 /* resizing and the small toolbar on each area */
 let RS = null;
@@ -345,7 +253,7 @@ ed.addEventListener('click', (e) => {
 /* ---------- the ChemSketch editor window ---------- */
 const Sketch = { ready: false, fig: null, pending: false };
 const cdm = $('#cdm'), frame = $('#cdFrame');
-function openDrawing(fig) {
+function openDrawing(fig, opts = {}) {
   closeMenus();
   History.flush();
   const doc = CS.clone(drawingFor(fig));
@@ -362,15 +270,16 @@ function openDrawing(fig) {
   }
   Sketch.fig = fig;
   Sketch.doc = doc;
+  Sketch.opts = opts;
   cdm.hidden = false;
   document.body.style.overflow = 'hidden';
-  if (!frame.getAttribute('src')) frame.src = '../index.html?embed=1';
+  if (!frame.getAttribute('src')) frame.src = 'sketch.html?embed=1';
   if (Sketch.ready) sendLoad(); else Sketch.pending = true;
 }
 function sendLoad() {
   Sketch.pending = false;
   $('#cdmWait').hidden = true;
-  frame.contentWindow.postMessage({ type: 'chemsketch:load', doc: Sketch.doc }, '*');
+  frame.contentWindow.postMessage({ type: 'chemsketch:load', doc: Sketch.doc, wizard: !!Sketch.opts.wizard }, '*');
   frame.focus();
 }
 function closeDrawing() {
@@ -389,6 +298,10 @@ window.addEventListener('message', (e) => {
     const f = Sketch.fig;
     if (isSketchDoc(m.doc) && f.isConnected) {
       DRAW[f.dataset.id] = m.doc;
+      // a flowchart may have made the page taller: grow the area to match (within the page)
+      const page = figPage(m.doc);
+      f.style.width = Math.round(Math.min(CW, page.width / PX2PT)) + 'px';
+      f.style.height = Math.round(Math.min(CH - 20, Math.max(40, page.height / PX2PT))) + 'px';
       buildFig(f);
       reflowSoon(20);
       save();
@@ -396,6 +309,10 @@ window.addEventListener('message', (e) => {
     }
     closeDrawing();
   } else if (m.type === 'chemsketch:cancel') {
+    // cancelling a drawing that was just inserted removes the empty area again
+    const f = Sketch.fig;
+    const discard = Sketch.opts && Sketch.opts.isNew && f && f.isConnected && isEmptyDrawing(drawingFor(f));
     closeDrawing();
+    if (discard) History.undo();
   }
 });

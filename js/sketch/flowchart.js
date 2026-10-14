@@ -58,6 +58,9 @@
     if (spec.font) opt.font = spec.font;
     if (spec.size) opt.size = spec.size;
     opt.header = !!(spec.title || spec.author);
+    // inside a ChemWord document the flowchart is a single drawing: no page margins, no page breaks
+    var onePage = CS.embed;
+    if (onePage) opt.margin = 4;
     var pages = [];
     var page = firstPage || CS.Doc.newPage('A4');
     pages.push(page);
@@ -68,7 +71,7 @@
     spec.steps.forEach(function (s) { maxCap = Math.max(maxCap, captionHeight(s.caption, L.boxW - 2 * PAD, opt)); });
     L.boxH = Math.max(opt.boxH, maxCap + 22 + 72 + 18);
     var rowsPerPage = Math.max(1, Math.floor((page.height - L.top - 24 + L.gapY) / (L.boxH + L.gapY)));
-    var perPage = rowsPerPage * L.cols;
+    var perPage = onePage ? Infinity : rowsPerPage * L.cols;
     var prevBox = null, num = spec.startNum || 1;
     page.flow = { cols: L.cols, top: L.top, boxW: L.boxW, boxH: L.boxH, margin: L.margin, gapX: L.gapX, gapY: L.gapY, font: opt.font, size: opt.size };
     spec.steps.forEach(function (step, i) {
@@ -91,6 +94,10 @@
       if (prevBox) page.objects.push({ id: CS.uid(), type: 'connector', from: prevBox.id, to: box.id, route: 'auto', width: 0.75 });
       prevBox = box;
     });
+    if (onePage) {
+      var rows = Math.ceil(spec.steps.length / L.cols);
+      page.height = Math.ceil(L.top + rows * L.boxH + (rows - 1) * L.gapY + opt.margin);
+    }
     return pages;
   }
 
@@ -160,19 +167,6 @@
   }
 
   // ------------------------------------------------------------ wizard
-  var EXAMPLE = {
-    title: 'Carbenes', author: 'Numan Berk Eyüpoğlu', cols: 2,
-    steps: [
-      { preset: 'flask', caption: 'To a 250 ml-round bottom flask; cyclohexene (0.06 mol, 5 g), chloroform (0.09 mol, 10.8 g) and benzyltriethylamonium chloride salt (0.27 mmol, 0.06 g) are added.', labels: ['round-bottom flask'] },
-      { preset: 'reflux', caption: 'Reaction mixture is heated to 40 °C in a water bath by using a condenser (reflux system).', labels: ['condenser', 'water bath, 40 °C'] },
-      { preset: 'addition', caption: 'NaOH solution (31.2 g in 32.5 mL water) is added to the mixture at 40 °C in 30 minutes by dropwise.', labels: ['NaOH solution'] },
-      { preset: 'pour', caption: 'Mixture is stirred for one hour with care, then the reaction mixture is diluted with 2 x 25 mL of chloroform.', labels: ['chloroform'] },
-      { preset: 'extraction', caption: 'Phases are separated and the water phase is extracted twice with chloroform.', labels: ['water phase', 'organic phase'] },
-      { preset: 'washdry', caption: 'Organic phase is washed with NaHCO3 in extraction funnel and dried over CaCl2.', labels: ['NaHCO3', 'CaCl2'] },
-      { preset: 'rotavap', caption: 'Chloroform and unreacted cyclohexene is removed by rotary evaporator.', labels: ['rotary evaporator'] }
-    ]
-  };
-
   function presetOptions(sel) {
     var s = '<option value="none"' + (sel === 'none' ? ' selected' : '') + '>— empty box (draw yourself) —</option>';
     A.presets.forEach(function (p) { s += '<option value="' + p.id + '"' + (p.id === sel ? ' selected' : '') + '>' + CS.esc(p.name) + '</option>'; });
@@ -187,9 +181,9 @@
     var body = document.createElement('div');
     body.className = 'wizard';
     function renderBody() {
-      var s = '<div class="wz-head">' +
-        '<label>Title <input data-k="title" value="' + CS.esc(model.title || '') + '" placeholder="e.g. Carbenes"></label>' +
-        '<label>Author <input data-k="author" value="' + CS.esc(model.author || '') + '" placeholder="your name"></label>' +
+      var s = '<div class="wz-head">' + (CS.embed ? '' :
+        '<label>Title <input data-k="title" value="' + CS.esc(model.title || '') + '" placeholder="e.g. Synthesis of aspirin"></label>' +
+        '<label>Author <input data-k="author" value="' + CS.esc(model.author || '') + '" placeholder="your name"></label>') +
         '<label>Columns <select data-k="cols">' + [1, 2, 3].map(function (n) { return '<option' + (model.cols === n ? ' selected' : '') + '>' + n + '</option>'; }).join('') + '</select></label>' +
         '<label>Font <select data-k="font"><option value="ChemSerif"' + (model.font !== 'ChemSans' ? ' selected' : '') + '>Serif (Times-like)</option><option value="ChemSans"' + (model.font === 'ChemSans' ? ' selected' : '') + '>Sans (Arial-like)</option></select></label>' +
         '</div><div class="wz-hint">Each step becomes a numbered box with an apparatus drawing, labels and an arrow to the next step. Formulas such as NaHCO3 or CaCl2 are subscripted automatically. Everything stays editable afterwards.</div><div class="wz-steps">';
@@ -240,7 +234,6 @@
     CS.UI.dialog({
       title: 'Flowchart wizard', body: body, wide: true,
       buttons: [
-        { label: 'Load lab example', action: function () { model = CS.clone(EXAMPLE); renderBody(); return false; } },
         { label: 'Cancel' },
         {
           label: 'Create flowchart', primary: true, action: function () {
@@ -268,5 +261,5 @@
     CS.Editor.fitPage();
   }
 
-  CS.Flow = { build: build, addStep: addStep, relayout: relayout, openWizard: openWizard, EXAMPLE: EXAMPLE, create: create };
+  CS.Flow = { build: build, addStep: addStep, relayout: relayout, openWizard: openWizard, create: create };
 })(window.CS);

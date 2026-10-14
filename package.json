@@ -1,0 +1,11 @@
+{
+  "name": "chemword",
+  "private": true,
+  "description": "Browser-based word processor for chemistry with a built-in structure and flowchart editor. No build step: open index.html.",
+  "scripts": {
+    "test": "node tests/smoke.cjs"
+  },
+  "devDependencies": {
+    "playwright": "1.64.0"
+  }
+}

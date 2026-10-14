@@ -3,7 +3,7 @@
    with a PNG fallback for older readers. The ChemWord project is stored inside the .docx so it
    can be reopened with drawings still editable. */
 
-const JSZIP_SRC = '../js/vendor/jszip.min.js', MAMMOTH_SRC = '../js/vendor/mammoth.browser.min.js';
+const JSZIP_SRC = 'js/vendor/jszip.min.js', MAMMOTH_SRC = 'js/vendor/mammoth.browser.min.js';
 const XE = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const _cc = document.createElement('canvas').getContext('2d');
 function hexOf(c) {
@@ -258,7 +258,6 @@ async function exportDOCX() {
     if (OPTS.pn) zip.file('word/footer1.xml', footer);
     for (const m of media) zip.file('word/media/' + m.name, m.blob);
     const blob = await zip.generateAsync({ type: 'blob', mimeType: MIME.docx });
-    window._lastDocx = blob;
     reflow();
     await saveFile(docName() + '.docx', blob);
   } catch (e) {
@@ -274,7 +273,7 @@ async function importWord(buf) {
   await loadScript(MAMMOTH_SRC);
   const r = await window.mammoth.convertToHtml({ arrayBuffer: buf });
   openProject({ v: 1, html: sanitizeDoc(r.value) || '<p><br></p>', draws: {}, opts: { pn: false } },
-    'Opened the Word file. Drawings in it are now pictures; add a drawing area to draw new ones.');
+    'Opened the Word file. Drawings in it are now pictures; use Insert → Structure to draw new ones.');
 }
 async function openDocx(buf) {
   await loadScript(JSZIP_SRC);

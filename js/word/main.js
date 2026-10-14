@@ -16,5 +16,5 @@
     reflow();
   });
   // load the drawing editor in the background so the first drawing opens instantly
-  setTimeout(() => { if (!frame.getAttribute('src')) frame.src = '../index.html?embed=1'; }, 1500);
+  setTimeout(() => { if (!frame.getAttribute('src')) frame.src = 'sketch.html?embed=1'; }, 1500);
 })();

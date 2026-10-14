@@ -1,4 +1,4 @@
-/* Boot: load fonts, build UI, restore the autosaved document (or show the lab example).
+/* Boot: load fonts, build UI, restore the autosaved document (or start blank).
    In embed mode (?embed=1) ChemSketch is the drawing window of ChemWord: it receives a drawing
    through postMessage and sends it back when the user presses Done. */
 (function (CS) {
@@ -14,12 +14,7 @@
         if (!empty) { CS.Doc.load(doc); restored = true; }
       } catch (e) { restored = false; }
     }
-    if (!restored) {
-      CS.Flow.build(CS.Flow.EXAMPLE, CS.page());
-      CS.state.doc.title = 'Carbenes';
-      CS.History.reset();
-      CS.emit('change');
-    } else {
+    if (restored) {
       CS.UI.toast('Restored your last drawing (File → New to start over)');
     }
     CS.Editor.fitPage();
@@ -61,6 +56,7 @@
         CS.emit('change');
         CS.History.reset();
         CS.Editor.fitPage();
+        if (e.data.wizard) CS.Flow.openWizard();
       } catch (err) {
         CS.UI.toast('Could not open this drawing: ' + err.message, true);
       }

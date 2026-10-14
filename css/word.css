@@ -1,6 +1,5 @@
-/* ChemWord: word-processor shell. Ribbon on top, A4 pages on a grey desk, status bar below.
-   Drawings open in ChemSketch, shown full-screen in a frame. */
-/* Layout: word-processor shell. Ribbon on top, A4 pages on a grey desk, status bar below. A full-screen ChemDraw sketcher opens over it when a chem area is clicked. */
+/* ChemWord: Word-style shell. Title bar, ribbon tabs and groups, A4 pages on a grey desk, status bar.
+   Structures and flowcharts open in ChemSketch (sketch.html), shown full-screen in a frame. */
 :root{
   --desk:#e3e6eb; --chrome:#ffffff; --chrome-2:#f2f4f7; --ink:#1b222c; --muted:#5d6878; --line:#d5dbe3;
   --accent:#1f4fd6; --accent-ink:#ffffff; --accent-soft:#e4ebff; --danger:#b42318;
@@ -21,8 +20,8 @@ button,input,select{font:inherit;color:inherit}
 button{cursor:pointer}
 :focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 
-.app{height:100%;display:grid;grid-template-rows:auto minmax(0,1fr) auto}
-.rib{background:var(--chrome);border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;align-items:center;gap:4px 4px;padding:6px 8px;scrollbar-width:thin;position:relative;z-index:6}
+.app{height:100%;display:grid;grid-template-rows:auto auto auto minmax(0,1fr) auto}
+.rib{background:var(--chrome);border-bottom:1px solid var(--line);display:flex;align-items:stretch;gap:4px;padding:4px 8px 2px;scrollbar-width:thin;position:relative;z-index:6;overflow-x:auto;min-height:92px}
 .grp{display:flex;align-items:center;gap:2px;flex:none}
 .sep{width:1px;height:24px;background:var(--line);margin:0 5px;flex:none}
 .ib{border:1px solid transparent;background:none;border-radius:6px;height:32px;min-width:32px;padding:0 7px;display:inline-flex;align-items:center;justify-content:center;gap:5px;flex:none;color:var(--ink);font-size:13.5px;white-space:nowrap}
@@ -38,7 +37,7 @@ button{cursor:pointer}
 .cbar{display:block;height:3px;width:16px;border-radius:1px;margin-top:-2px}
 .cw{display:inline-flex;flex-direction:column;align-items:center;line-height:1}
 .colin{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
-.tgrp{background:var(--accent-soft);border-radius:8px;padding:0 4px}
+.tgrp{background:var(--accent-soft);border-radius:8px;padding:0 4px;align-self:center;flex-wrap:wrap;max-width:420px}
 .tgrp .lbl,.igrp .lbl{font-size:11.5px;color:var(--muted);padding:0 4px;text-transform:uppercase;letter-spacing:.05em}
 
 .scroller{overflow:auto;position:relative;min-height:0;overscroll-behavior:contain}
@@ -47,8 +46,6 @@ button{cursor:pointer}
 .pbg{position:absolute;left:0;top:0;width:794px;pointer-events:none}
 .pg{position:absolute;left:0;width:794px;height:1123px;background:#fff;box-shadow:0 1px 3px rgba(10,20,40,.14),0 8px 22px rgba(10,20,40,.10)}
 .pnum{position:absolute;left:0;right:0;bottom:44px;text-align:center;font:10pt DocSans,Calibri,Carlito,sans-serif;color:#000}
-.area{position:absolute;inset:0;cursor:crosshair;z-index:4;touch-action:none}
-.arect{position:absolute;border:1.5px dashed #1f4fd6;background:rgba(31,79,214,.07);pointer-events:none}
 
 /* ---------- the document (always paper colours) ---------- */
 .doc{position:relative;padding:96px 96px 0;outline:none;font-family:DocSans,Calibri,Carlito,sans-serif;font-size:11pt;line-height:1.15;color:#000;caret-color:#000;overflow-wrap:break-word;z-index:1}
@@ -111,7 +108,7 @@ figure.chem:hover .crs,figure.chem.sel .crs{display:block}
 .sheet img{max-width:100%;background:#fff;border:1px solid var(--line)}
 #exportHost{position:fixed;left:-12000px;top:0}
 @media (max-width:760px){
-  .rib{flex-wrap:nowrap;overflow-x:auto}
+  .doctitle,.brand span{display:none}
   .status .wc{display:none}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
@@ -123,3 +120,29 @@ figure.chem:hover .crs,figure.chem.sel .crs{display:block}
 figure.chem .cnote{position:absolute;left:0;bottom:-18px;font:11px var(--f-ui);color:#8a5a00;white-space:nowrap;display:none}
 figure.chem:hover .cnote.on,figure.chem.sel .cnote.on{display:block}
 .printing .cnote{display:none!important}
+
+/* ---------- Word-style title bar, ribbon tabs and groups ---------- */
+.titlebar{background:var(--accent);color:var(--accent-ink);display:flex;align-items:center;gap:10px;padding:4px 10px;min-height:42px}
+.titlebar .brand{display:flex;align-items:center;gap:7px;font-weight:600;font-size:14.5px;white-space:nowrap}
+.titlebar .qa{display:flex;gap:2px}
+.titlebar .ib{color:var(--accent-ink)}
+.titlebar .ib:hover{background:rgba(255,255,255,.16);border-color:transparent}
+.titlebar .ib:disabled{opacity:.45}
+.titlebar .doctitle{flex:1;text-align:center;font-size:13px;opacity:.95;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.titlebar .ib.pri{background:var(--accent-ink);color:var(--accent);border-color:var(--accent-ink)}
+.tabs{background:var(--chrome);display:flex;gap:2px;padding:4px 8px 0;border-bottom:1px solid var(--line)}
+.tab{border:0;background:none;padding:7px 14px 8px;font-size:13.5px;color:var(--ink);border-bottom:3px solid transparent;border-radius:6px 6px 0 0}
+.tab:hover{background:var(--chrome-2)}
+.tab[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+.tab.file{background:var(--accent);color:var(--accent-ink);border-radius:6px;margin:0 6px 5px 0;padding:5px 14px}
+.tab.file:hover{filter:brightness(1.08)}
+.pane{display:flex;align-items:stretch;gap:4px;flex:none}
+.rgrp{display:flex;flex-direction:column;justify-content:space-between;padding:2px 8px 0;border-right:1px solid var(--line);flex:none}
+.rrow{display:flex;align-items:center;flex-wrap:wrap;gap:2px;max-width:560px}
+.rrow+.rrow{margin-top:2px}
+.rlbl{text-align:center;font-size:11px;color:var(--muted);padding:2px 0 3px}
+.ib.big{flex-direction:column;height:64px;min-width:62px;gap:3px;font-size:12px;padding:4px 8px}
+.ib.big svg{flex:none}
+.ib.big .fx{font:600 20px/26px Georgia,serif;height:26px}
+.ib.big .fx sub{font-size:.6em}
+.ck{display:flex;align-items:center;gap:6px;font-size:13px;padding:4px 8px;white-space:nowrap}

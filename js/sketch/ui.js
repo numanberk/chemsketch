@@ -493,9 +493,6 @@
     toggleSnap: function () { state.doc.settings.snap = !state.doc.settings.snap; refreshMenus(); toast('Snap to grid ' + (state.doc.settings.snap ? 'on' : 'off')); },
     toggleCIP: function () { state.showCIP = !state.showCIP; CS.Editor.render(); refreshMenus(); },
     flowWizard: function () { CS.Flow.openWizard(); },
-    flowExample: function () {
-      CS.Flow.openWizard(CS.Flow.EXAMPLE);
-    },
     flowAddStep: function () {
       var b = CS.Flow.addStep(CS.page());
       state.sel = new Set(['o:' + b.id]);
@@ -503,7 +500,7 @@
       toast('Step ' + b.num + ' added – double-click it to write the caption');
     },
     flowRelayout: function () { CS.Flow.relayout(CS.page()); CS.commit(); toast('Flowchart re-arranged'); },
-    openChemWord: function () { window.open('chemword/index.html', '_blank'); },
+    openChemWord: function () { window.open('index.html', '_blank'); },
     shortcuts: function () { dialog({ title: 'Keyboard shortcuts', body: SHORTCUTS_HTML, wide: true }); },
     about: function () { dialog({ title: 'About ChemSketch', body: ABOUT_HTML }); }
   });
@@ -669,7 +666,7 @@
     },
     {
       name: 'Flowchart', items: [
-        ['Flowchart wizard…', 'flowWizard'], ['Open lab example (Carbenes)', 'flowExample'], '-', ['Add next step box', 'flowAddStep'], ['Re-arrange steps & arrows', 'flowRelayout'], '-',
+        ['Flowchart wizard…', 'flowWizard'], '-', ['Add next step box', 'flowAddStep'], ['Re-arrange steps & arrows', 'flowRelayout'], '-',
         ['Lab equipment…', 'panel:lab']
       ]
     },

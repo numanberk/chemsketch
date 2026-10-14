@@ -1,20 +1,39 @@
-# ChemSketch
+# ChemWord
 
-A free, browser-based alternative to ChemDraw for drawing chemical structures, reactions and
-mechanisms, and for building **illustrated lab-procedure flowcharts** (numbered step boxes with
-glassware drawings, labels and arrows). It exports a **vector PDF** with embedded fonts.
+A free, browser-based word processor for chemistry, in the style of Microsoft Word, with a
+ChemDraw-style structure editor and a lab-flowchart maker built in. It exports vector PDF and
+Word (.docx).
 
-No installation and no build step. Open `index.html` in Chrome, Edge, Firefox or Safari and it
-runs, offline too. To host it, serve the folder from any static server or enable GitHub Pages
-on this repository.
+Open `index.html` in Chrome, Edge, Firefox or Safari. There is no installation or build step, and
+everything works offline except PubChem name lookups. To host it, serve the folder from any static
+server or enable GitHub Pages on this repository.
 
-**ChemWord** (`chemword/index.html`, also in ChemSketch's **File** menu) is a Word-style document
-editor with ChemSketch drawings built in. It exports vector PDF and Word files; see
-[chemword/README.md](chemword/README.md).
+## Using it
 
-## Features
+- **Write** as in Word, using the **Home** tab: styles, fonts, bold/italic/underline, sub- and
+  superscript, colours, alignment, lists, indents and line spacing.
+- **Insert → Structure** opens the drawing editor (ChemSketch) in a box at the cursor. Draw a
+  molecule, reaction or mechanism and press **Done**; click the drawing later to edit it again.
+- **Insert → Flowchart** opens the flowchart wizard. Pick an apparatus setup for each step and
+  write the captions; the result is placed in the document.
+- **Chemical formulas** are formatted as you type: CaCl2 → CaCl₂ and Na+ → Na⁺. One Ctrl+Z reverts
+  a word, the **Formulas** button formats existing text, and **View → Format formulas while typing**
+  turns it off.
+- **Insert** also has tables, pictures, symbols (α, °, ⇌, …) and page breaks.
+- **Undo/redo** covers everything, including inserting and deleting drawings.
+- **Export PDF** (title bar, or **File**) produces a vector PDF with embedded fonts: sharp,
+  selectable text and vector drawings. **File → Export as Word** saves a .docx with drawings as SVG,
+  plus PNG for older Word versions.
+- **Reopening:** PDF and .docx exports carry the project inside them, so **File → Open** makes
+  everything editable again. **File → Save project** writes a `.json` file, and the document also
+  autosaves in the browser.
 
-### Structure drawing
+The drawing editor also runs on its own at `sketch.html` (**File → Open ChemSketch**), with
+multiple pages and its own PDF/SVG/PNG/MOL export.
+
+### Drawing editor (ChemSketch) features
+
+#### Structure drawing
 - Single, double, triple, wedge, hashed, hollow wedge, wavy, bold and dashed bonds, plus a partial/aromatic double bond.
 - Click a bond to cycle single → double → triple. Click a double bond to move its second line (auto / left / centre / right).
 - Chain tool: drag out a zig-zag carbon chain; it shows the atom count while you drag.
@@ -33,22 +52,21 @@ editor with ChemSketch drawings built in. It exports vector PDF and Word files; 
 - About 100 templates: rings, heteroaromatics, amino acids, sugars and nucleobases, solvents and reagents, common drugs.
 - Drawing styles: Default, ACS Document 1996, RSC/Wiley and Presentation. Changing the style can rescale existing drawings.
 
-### Arrows, text and shapes
+#### Arrows, text and shapes
 - Reaction, equilibrium (equal or unequal), resonance, retrosynthetic, dashed and no-reaction arrows.
 - Curved electron-pushing arrows with full or half (fishhook) heads; drag the middle handle to bend them.
 - Rich text with automatic formula formatting: `NaHCO3` → NaHCO₃ and `Na+` → Na⁺. Manual markup also works: `H_2O`, `x^{2-}`.
 - Rectangles, rounded rectangles, ellipses, [ ] ( ) { } brackets with labels, p-orbitals and images.
 
-### Lab procedure flowcharts
-- **Flowchart wizard** (Flowchart menu, or the button in the top bar). List your steps, choose a ready-made apparatus setup for each one, and type the captions and labels. It lays out a numbered, two-column (or 1/3-column) figure with a title, author line and elbow arrows between boxes. It splits onto more pages when needed.
-- **Flowchart → Open lab example (Carbenes)** recreates the dichlorocarbene pre-lab figure.
+#### Lab procedure flowcharts
+- **Flowchart wizard** (Insert → Flowchart in the document, or the Flowchart menu in the drawing editor). List your steps, choose a ready-made apparatus setup for each one, and type the captions and labels. It lays out numbered boxes in 1–3 columns with elbow arrows between them. Inside a document the flowchart is one figure that grows to fit; in the standalone editor it can have a title, an author line and several pages.
 - Glassware library: round-bottom, two- and three-neck flasks; Erlenmeyer, filter flask and beaker; reflux condenser and distillation head; addition, separatory, glass and Büchner funnels; water/ice bath, heating mantle, stirrer hot plate, cork ring, Bunsen burner and stir bar; ring stand and clamp; test tube, vial, graduated cylinder, thermometer, pipette and syringe; watch glass, Petri dish, crystals, TLC plate, mortar & pestle; rotary evaporator and a simple distillation setup.
 - Ready-made setups with labels: flask on hot plate, reflux in water bath, addition funnel + reflux, adding liquid from a tube, separatory-funnel extraction, wash & dry, rotary evaporation, simple distillation, vacuum and gravity filtration, recrystallisation, ice bath, reflux with heating mantle, TLC chamber.
 - Adjustable properties: liquid levels (including two-phase funnels), liquid colour, stir bars, solids, ice, mirror and rotation.
 - Step boxes move together with everything drawn inside them. Connectors re-route automatically when boxes move.
 - **Add next step** and **Re-arrange steps & arrows** tidy a flowchart you have edited by hand.
 
-### Editing and files
+#### Editing and files
 - Undo/redo, copy/cut/paste, duplicate (Alt-drag also copies), group/ungroup, bring to front / send to back.
 - Flip, rotate (rotation handle with 15° snapping), scale, align and distribute, arrow-key nudging, and an optional grid with snapping.
 - Multiple pages (A4, Letter, A5, A3, Legal; portrait or landscape).
@@ -61,22 +79,19 @@ Press **Help → Keyboard shortcuts** inside the app for the full list.
 ## Project layout
 
 ```
-index.html          app shell
-css/app.css         styles
-js/core.js          helpers & geometry
-js/richtext.js      sub/superscript text layout
-js/chem.js          elements, valences, formula/mass, OpenChemLib bridge
-js/render.js        SVG rendering of structures, arrows, shapes, flowchart parts
-js/apparatus.js     glassware drawings and ready-made setups
-js/document.js      document model, undo history, transforms
-js/editor.js        canvas interaction and tools
-js/templates.js     structure templates
-js/flowchart.js     flowchart layout + wizard
-js/export.js        PDF / SVG / PNG export
-js/ui.js            menus, palette, panels, dialogs
-js/vendor/          jsPDF, svg2pdf.js, OpenChemLib, JSZip, mammoth, bundled fonts
-chemword/           ChemWord document editor (uses the files above)
+index.html            ChemWord (the default app)
+sketch.html           ChemSketch drawing editor (standalone, or embedded in ChemWord with ?embed=1)
+css/word.css          ChemWord styles
+css/sketch.css        ChemSketch styles
+js/word/              ChemWord: util, history (undo), drawings (embedding ChemSketch), editor,
+                      formulas, pdf (vector export), docx (Word export/import), main
+js/sketch/            ChemSketch: core, richtext, chem, apparatus, render, document, templates,
+                      editor, export, flowchart, ui, main
+js/vendor/            jsPDF, svg2pdf.js, OpenChemLib, JSZip, mammoth, bundled fonts
+fonts/                font licences
 ```
+
+See `CLAUDE.md` for how the pieces fit together and how to test changes.
 
 ## Third-party components
 

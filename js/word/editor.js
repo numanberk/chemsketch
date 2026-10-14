@@ -290,6 +290,8 @@ function updateCtxGroups() {
 }
 $('#rib').addEventListener('mousedown', (e) => { if (e.target.closest('button')) e.preventDefault(); });
 $('#rib').addEventListener('click', (e) => {
+  const ins = e.target.closest('[data-ins]');
+  if (ins) return insertDrawing(ins.dataset.ins);
   const b = e.target.closest('[data-cmd]');
   if (b) return exec(b.dataset.cmd);
   const t = e.target.closest('[data-t]');
@@ -672,10 +674,37 @@ function updateStatus(pageOnly) {
     const t = (ed.innerText || '').trim();
     const n = t ? t.split(/\s+/).length : 0;
     $('#stWords').textContent = n + (n === 1 ? ' word' : ' words');
+    const first = (ed.innerText || '').trim().split('\n')[0].trim();
+    $('#docTitle').textContent = first ? first.slice(0, 80) : 'Document';
   }, 300);
 }
 
 /* ================= file menu & opening files ================= */
+/* title bar and ribbon tabs */
+$('.qa').addEventListener('mousedown', (e) => { if (e.target.closest('button')) e.preventDefault(); });
+$('.qa').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-cmd]');
+  if (b) exec(b.dataset.cmd);
+});
+$('#qSave').onclick = () => saveFile(docName() + '.chemword.json', JSON.stringify(projectObj()));
+$('#qPdf').onclick = () => exportPDF();
+function showTab(name) {
+  $$('.tabs [data-tab]').forEach((t) => t.setAttribute('aria-selected', t.dataset.tab === name));
+  $$('#rib .pane').forEach((p) => (p.hidden = p.dataset.pane !== name));
+}
+$$('.tabs [data-tab]').forEach((t) => t.addEventListener('click', () => showTab(t.dataset.tab)));
+$('.tabs').addEventListener('mousedown', (e) => { if (e.target.closest('[data-tab]')) e.preventDefault(); });
+$('#vZoomIn').onclick = () => $('#zIn').click();
+$('#vZoomOut').onclick = () => $('#zOut').click();
+$('#vFit').onclick = () => $('#zFit').click();
+$('#v100').onclick = () => setZoom(1);
+document.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === 's' && cdm.hidden) {
+    e.preventDefault();
+    $('#qSave').click();
+  }
+});
+
 $('#mFile').addEventListener('click', (e) => {
   const b = e.target.closest('[data-f]');
   if (!b) return;
@@ -698,7 +727,7 @@ $('#mFile').addEventListener('click', (e) => {
   else if (f === 'save') saveFile(docName() + '.chemword.json', JSON.stringify(projectObj()));
   else if (f === 'pdf') exportPDF();
   else if (f === 'docx') exportDOCX();
-  else if (f === 'chemsketch') window.open('../index.html', '_blank');
+  else if (f === 'chemsketch') window.open('sketch.html', '_blank');
 });
 $('#optPn').addEventListener('change', (e) => { OPTS.pn = e.target.checked; drawPages(NPAGES); save(); });
 $('#optChem').addEventListener('change', (e) => { OPTS.autoChem = e.target.checked; save(); });

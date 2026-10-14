@@ -14,12 +14,6 @@
       ]
     },
     {
-      name: 'Carbenes lab', items: [
-        ['Cyclohexene', 'C1CCC=CC1'], ['Chloroform', 'ClC(Cl)Cl'], ['Dichlorocarbene', '[C](Cl)Cl'],
-        ['7,7-Dichloronorcarane', 'ClC1(Cl)C2CCCCC12'], ['TEBA (BnEt3N+ Cl−)', 'CC[N+](CC)(CC)Cc1ccccc1.[Cl-]'], ['Sodium hydroxide', '[Na+].[OH-]']
-      ]
-    },
-    {
       name: 'Amino acids', items: [
         ['Glycine', 'NCC(=O)O'], ['Alanine', 'C[C@H](N)C(=O)O'], ['Valine', 'CC(C)[C@H](N)C(=O)O'], ['Leucine', 'CC(C)C[C@H](N)C(=O)O'],
         ['Isoleucine', 'CC[C@H](C)[C@H](N)C(=O)O'], ['Proline', 'OC(=O)[C@@H]1CCCN1'], ['Phenylalanine', 'N[C@@H](Cc1ccccc1)C(=O)O'],
