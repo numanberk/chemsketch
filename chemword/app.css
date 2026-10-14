@@ -1,0 +1,125 @@
+/* ChemWord: word-processor shell. Ribbon on top, A4 pages on a grey desk, status bar below.
+   Drawings open in ChemSketch, shown full-screen in a frame. */
+/* Layout: word-processor shell. Ribbon on top, A4 pages on a grey desk, status bar below. A full-screen ChemDraw sketcher opens over it when a chem area is clicked. */
+:root{
+  --desk:#e3e6eb; --chrome:#ffffff; --chrome-2:#f2f4f7; --ink:#1b222c; --muted:#5d6878; --line:#d5dbe3;
+  --accent:#1f4fd6; --accent-ink:#ffffff; --accent-soft:#e4ebff; --danger:#b42318;
+  --f-ui:system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --f-mono:ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --desk:#0d1117; --chrome:#171d26; --chrome-2:#1e2632; --ink:#e4e9f0; --muted:#98a4b5; --line:#2b3542;
+  --accent:#86a6ff; --accent-ink:#0b1222; --accent-soft:#1f2b46; --danger:#ff8a80; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --desk:#0d1117; --chrome:#171d26; --chrome-2:#1e2632; --ink:#e4e9f0; --muted:#98a4b5; --line:#2b3542;
+  --accent:#86a6ff; --accent-ink:#0b1222; --accent-soft:#1f2b46; --danger:#ff8a80; color-scheme:dark }
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{margin:0;background:var(--desk);color:var(--ink);font-family:var(--f-ui);font-size:13.5px;overflow:hidden}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+
+.app{height:100%;display:grid;grid-template-rows:auto minmax(0,1fr) auto}
+.rib{background:var(--chrome);border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;align-items:center;gap:4px 4px;padding:6px 8px;scrollbar-width:thin;position:relative;z-index:6}
+.grp{display:flex;align-items:center;gap:2px;flex:none}
+.sep{width:1px;height:24px;background:var(--line);margin:0 5px;flex:none}
+.ib{border:1px solid transparent;background:none;border-radius:6px;height:32px;min-width:32px;padding:0 7px;display:inline-flex;align-items:center;justify-content:center;gap:5px;flex:none;color:var(--ink);font-size:13.5px;white-space:nowrap}
+.ib:hover{background:var(--chrome-2);border-color:var(--line)}
+.ib[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent)}
+.ib:disabled{opacity:.4;cursor:default}
+.ib.pri{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600;padding:0 11px}
+.ib.pri[aria-pressed="true"]{box-shadow:0 0 0 3px var(--accent-soft)}
+.ib sub,.ib sup{font-size:.68em;line-height:0}
+.ib.dd{min-width:20px;padding:0 3px;margin-left:-3px}
+.sel{height:32px;border:1px solid var(--line);background:var(--chrome);border-radius:6px;padding:0 6px;flex:none}
+.sel.fam{width:150px}.sel.sz{width:62px}.sel.sty{width:112px}
+.cbar{display:block;height:3px;width:16px;border-radius:1px;margin-top:-2px}
+.cw{display:inline-flex;flex-direction:column;align-items:center;line-height:1}
+.colin{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
+.tgrp{background:var(--accent-soft);border-radius:8px;padding:0 4px}
+.tgrp .lbl,.igrp .lbl{font-size:11.5px;color:var(--muted);padding:0 4px;text-transform:uppercase;letter-spacing:.05em}
+
+.scroller{overflow:auto;position:relative;min-height:0;overscroll-behavior:contain}
+.stage{position:relative}
+.paper{position:absolute;top:24px;width:794px;transform-origin:0 0}
+.pbg{position:absolute;left:0;top:0;width:794px;pointer-events:none}
+.pg{position:absolute;left:0;width:794px;height:1123px;background:#fff;box-shadow:0 1px 3px rgba(10,20,40,.14),0 8px 22px rgba(10,20,40,.10)}
+.pnum{position:absolute;left:0;right:0;bottom:44px;text-align:center;font:10pt DocSans,Calibri,Carlito,sans-serif;color:#000}
+.area{position:absolute;inset:0;cursor:crosshair;z-index:4;touch-action:none}
+.arect{position:absolute;border:1.5px dashed #1f4fd6;background:rgba(31,79,214,.07);pointer-events:none}
+
+/* ---------- the document (always paper colours) ---------- */
+.doc{position:relative;padding:96px 96px 0;outline:none;font-family:DocSans,Calibri,Carlito,sans-serif;font-size:11pt;line-height:1.15;color:#000;caret-color:#000;overflow-wrap:break-word;z-index:1}
+.doc p{margin:0 0 8pt}
+.doc h1{font-size:16pt;font-weight:400;color:#2f5496;margin:12pt 0 4pt;line-height:1.15}
+.doc h2{font-size:13pt;font-weight:400;color:#2f5496;margin:10pt 0 4pt;line-height:1.15}
+.doc h3{font-size:12pt;font-weight:400;color:#1f3763;margin:8pt 0 4pt;line-height:1.15}
+.doc ul,.doc ol{margin:0 0 8pt;padding-left:36px}
+.doc li{margin:0}
+.doc blockquote{margin:0 0 0 40px}
+.doc table{border-collapse:collapse;width:100%;margin:0 0 8pt}
+.doc td,.doc th{border:1px solid #000;padding:2px 6px;vertical-align:top;min-width:24px}
+.doc img{max-width:100%;height:auto}
+.doc img.isel{outline:2px solid #1f4fd6}
+.doc hr{border:0;border-top:1px solid #000;margin:6px 0}
+.doc hr.pb{border-top:1.5px dashed #9aa6b8;margin:8px 0 12px}
+.doc ::selection{background:#c6d6ff}
+figure.chem{display:block;position:relative;margin:2px 0 8pt;cursor:pointer;user-select:none;-webkit-user-select:none}
+figure.chem svg.csvg{display:block;width:100%;height:100%}
+figure.chem:hover{outline:1px solid #1f4fd6;outline-offset:1px}
+figure.chem.empty{outline:1.5px dashed #9db0e8;outline-offset:-1px;background:#f5f7fc}
+figure.chem .clab{display:none;position:absolute;inset:0;align-items:center;justify-content:center;font:12px var(--f-ui);color:#4a5a78;text-align:center;padding:6px;pointer-events:none}
+figure.chem.empty .clab{display:flex}
+figure.chem .cui{position:absolute;top:-30px;right:0;display:none;gap:2px;background:#fff;border:1px solid #c9d2e0;border-radius:7px;padding:2px;box-shadow:0 4px 12px rgba(10,20,40,.14);z-index:3}
+figure.chem:hover .cui,figure.chem.sel .cui{display:flex}
+@media (hover:none){figure.chem .cui{display:flex}}
+.cui button{border:0;background:none;border-radius:5px;height:24px;min-width:26px;padding:0 6px;font:12px var(--f-ui);color:#1b222c}
+.cui button:hover{background:#eef2f8}
+.cui button.dl{color:#b42318}
+figure.chem .crs{position:absolute;right:-6px;bottom:-6px;width:13px;height:13px;border:2px solid #1f4fd6;background:#fff;border-radius:3px;cursor:nwse-resize;display:none;touch-action:none;z-index:3}
+figure.chem:hover .crs,figure.chem.sel .crs{display:block}
+@media (hover:none){figure.chem .crs{display:block}}
+
+/* print clone */
+.printing .pg{box-shadow:none}
+.printing figure.chem{outline:none!important;background:none!important}
+.printing .clab,.printing .cui,.printing .crs{display:none!important}
+.printing hr.pb{border-top-color:transparent}
+.printing img.isel{outline:none}
+
+.status{background:var(--chrome);border-top:1px solid var(--line);display:flex;align-items:center;gap:10px;padding:4px 10px calc(4px + env(safe-area-inset-bottom,0px));font-size:12.5px;color:var(--muted)}
+.status .sp{flex:1}
+.status .ib{height:26px;min-width:26px}
+.zl{min-width:46px;text-align:center;font-variant-numeric:tabular-nums}
+
+.menu{position:fixed;background:var(--chrome);border:1px solid var(--line);border-radius:10px;padding:6px;min-width:220px;box-shadow:0 12px 30px rgba(10,20,40,.22);display:grid;z-index:40;max-height:80vh;overflow:auto}
+.menu button,.menu label{border:0;background:none;text-align:left;padding:8px 10px;border-radius:7px;display:flex;gap:8px;align-items:center;font-size:13.5px;color:var(--ink)}
+.menu button:hover,.menu label:hover{background:var(--chrome-2)}
+.menu hr{border:0;border-top:1px solid var(--line);margin:4px 0;width:100%}
+.tgrid{display:grid;grid-template-columns:repeat(8,20px);gap:3px;padding:6px}
+.tgrid span{width:20px;height:20px;border:1px solid var(--line);border-radius:3px;background:var(--chrome)}
+.tgrid span.on{background:var(--accent-soft);border-color:var(--accent)}
+.tglab{text-align:center;font-size:12.5px;color:var(--muted);padding:2px 0 4px}
+.symg{display:grid;grid-template-columns:repeat(8,34px);gap:3px;padding:4px}
+.symg button{height:34px;padding:0;justify-content:center;font:16px ChemSans,Arial,Helvetica,sans-serif;border:1px solid var(--line)}
+
+#toast{position:fixed;left:50%;bottom:calc(64px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--chrome);padding:9px 16px;border-radius:9px;font-size:13.5px;z-index:90;max-width:calc(100% - 32px)}
+.sheet{position:fixed;inset:0;z-index:80;background:rgba(8,12,20,.55);display:grid;place-items:center;padding:16px}
+.sheet>div{background:var(--chrome);border-radius:12px;padding:16px;max-width:720px;width:100%;display:grid;gap:12px;max-height:90vh;overflow:auto}
+.sheet img{max-width:100%;background:#fff;border:1px solid var(--line)}
+#exportHost{position:fixed;left:-12000px;top:0}
+@media (max-width:760px){
+  .rib{flex-wrap:nowrap;overflow-x:auto}
+  .status .wc{display:none}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* ---------- drawing window: ChemSketch in a full-screen frame ---------- */
+.cdm{position:fixed;inset:0;z-index:30;background:var(--desk);display:grid}
+.cdm iframe{width:100%;height:100%;border:0;background:#fff}
+.cdm .cdm-wait{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font-size:15px;pointer-events:none}
+figure.chem .cnote{position:absolute;left:0;bottom:-18px;font:11px var(--f-ui);color:#8a5a00;white-space:nowrap;display:none}
+figure.chem:hover .cnote.on,figure.chem.sel .cnote.on{display:block}
+.printing .cnote{display:none!important}
