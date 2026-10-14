@@ -8,6 +8,10 @@ No installation and no build step. Open `index.html` in Chrome, Edge, Firefox or
 runs, offline too. To host it, serve the folder from any static server or enable GitHub Pages
 on this repository.
 
+**ChemWord** (`chemword/index.html`, also in ChemSketch's **File** menu) is a Word-style document
+editor with ChemSketch drawings built in. It exports vector PDF and Word files; see
+[chemword/README.md](chemword/README.md).
+
 ## Features
 
 ### Structure drawing
@@ -70,11 +74,18 @@ js/templates.js     structure templates
 js/flowchart.js     flowchart layout + wizard
 js/export.js        PDF / SVG / PNG export
 js/ui.js            menus, palette, panels, dialogs
-js/vendor/          jsPDF, svg2pdf.js, OpenChemLib, bundled fonts
+js/vendor/          jsPDF, svg2pdf.js, OpenChemLib, JSZip, mammoth, bundled fonts
+chemword/           ChemWord document editor (uses the files above)
 ```
 
 ## Third-party components
 
 - [OpenChemLib JS](https://github.com/cheminfo/openchemlib-js) (BSD-3-Clause): SMILES/MOL parsing, 2D coordinates, properties, CIP.
 - [jsPDF](https://github.com/parallax/jsPDF) and [svg2pdf.js](https://github.com/yWorks/svg2pdf.js) (MIT): PDF export.
-- Liberation Sans / Liberation Serif, subset and renamed ChemSans / ChemSerif (SIL Open Font License 1.1, see `fonts/OFL.txt`).
+- [JSZip](https://github.com/Stuk/jszip) (MIT) and [mammoth](https://github.com/mwilliamson/mammoth.js) (BSD-2-Clause): Word export and import in ChemWord.
+- Fonts, subset and renamed:
+  - Liberation Sans / Serif / Mono → ChemSans / ChemSerif / ChemMono;
+  - Carlito → DocSans;
+  - Caladea → DocSerif.
+
+  All are under the SIL Open Font License 1.1 (see `fonts/OFL.txt`). ChemSymbols is a subset of DejaVu Sans (Bitstream Vera licence, see `fonts/BITSTREAM-VERA.txt`).

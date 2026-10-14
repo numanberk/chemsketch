@@ -179,3 +179,7 @@ textarea.code { width: 100%; font-family: Consolas, monospace; }
   #menubar .menu-btn { padding: 6px 6px; }
   .brand span { display: none; }
 }
+
+/* embedded in ChemWord's drawing window */
+.embed .embed-note { color: var(--muted); font-size: 12px; margin-right: 6px; }
+.embed #doc-title { display: none; }

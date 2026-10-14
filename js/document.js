@@ -65,6 +65,7 @@
   });
 
   var autosave = CS.debounce(function () {
+    if (CS.embed) return;
     CS.store.set('chemsketch.autosave', JSON.stringify(state.doc));
   }, 600);
 

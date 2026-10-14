@@ -3,6 +3,9 @@ window.CS = window.CS || {};
 (function (CS) {
   'use strict';
 
+  // embedded mode: ChemSketch running inside ChemWord's drawing window
+  CS.embed = /[?&]embed=1\b/.test(location.search);
+
   CS.uid = function () {
     return Math.random().toString(36).slice(2, 10);
   };

@@ -39,9 +39,9 @@
   function fitPage() {
     var p = CS.page(), r = wrap.getBoundingClientRect();
     var z = Math.min((r.width - 40) / p.width, (r.height - 40) / p.height);
-    state.zoom = CS.clamp(z, 0.1, 16);
+    state.zoom = CS.clamp(z, 0.1, 4);
     state.pan.x = -(r.width / state.zoom - p.width) / 2;
-    state.pan.y = -20 / state.zoom;
+    state.pan.y = -Math.max(20, (r.height - p.height * state.zoom) / 2) / state.zoom;
     updateViewBox();
     render();
   }
@@ -431,7 +431,23 @@
   }
 
   // ------------------------------------------------------------ pointer handling
+  // two-finger pinch zoom / pan on touch screens
+  var pointers = new Map(), pinch = null;
+  function pinchState() {
+    var pts = Array.from(pointers.values());
+    return { d: Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y) || 1, m: { x: (pts[0].x + pts[1].x) / 2, y: (pts[0].y + pts[1].y) / 2 } };
+  }
+
   function onDown(ev) {
+    pointers.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+    if (pointers.size === 2) {
+      if (drag && drag.moved) CS.History.restore(CS.History.stack[CS.History.idx]);
+      drag = null;
+      pinch = pinchState();
+      render();
+      return;
+    }
+    if (pointers.size > 2) return;
     if (editing) commitEdit();
     if (ev.button === 1 || (ev.button === 0 && (spaceDown || state.tool === 'pan'))) {
       drag = { mode: 'pan', sx: ev.clientX, sy: ev.clientY, pan: { x: state.pan.x, y: state.pan.y } };
@@ -450,6 +466,15 @@
     render();
   }
   function onMove(ev) {
+    if (pointers.has(ev.pointerId)) pointers.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+    if (pinch && pointers.size === 2) {
+      var now = pinchState(), r = svg.getBoundingClientRect();
+      state.pan.x -= (now.m.x - pinch.m.x) / state.zoom;
+      state.pan.y -= (now.m.y - pinch.m.y) / state.zoom;
+      setZoom(state.zoom * now.d / pinch.d, { x: (now.m.x - r.left) / state.zoom + state.pan.x, y: (now.m.y - r.top) / state.zoom + state.pan.y });
+      pinch = now;
+      return;
+    }
     var p = toPage(ev);
     lastPointer = p;
     CS.emit('pointer', p);
@@ -490,6 +515,8 @@
     return null;
   }
   function onUp(ev) {
+    pointers.delete(ev.pointerId);
+    if (pinch) { if (pointers.size < 2) pinch = null; drag = null; return; }
     if (!drag) return;
     if (drag.mode === 'pan') { drag = null; wrap.classList.remove('panning'); return; }
     var p = toPage(ev);

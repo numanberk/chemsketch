@@ -2,36 +2,37 @@
 (function (CS) {
   'use strict';
 
-  var FONT_FILES = [
-    ['ChemSans', 'normal'], ['ChemSans', 'bold'], ['ChemSans', 'italic'], ['ChemSans', 'bolditalic'],
-    ['ChemSerif', 'normal'], ['ChemSerif', 'bold'], ['ChemSerif', 'italic'], ['ChemSerif', 'bolditalic']
-  ];
-
-  // Load the bundled fonts into the document so canvas measuring and on-screen text match the PDF.
-  function loadFonts() {
-    var data = window.CS_FONT_DATA;
-    if (!data || !window.FontFace) return Promise.resolve();
-    var jobs = FONT_FILES.map(function (f) {
-      var b64 = data[f[0] + '|' + f[1]];
-      if (!b64) return null;
-      var bin = atob(b64), buf = new Uint8Array(bin.length);
-      for (var i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
-      var face = new FontFace(f[0], buf.buffer, {
-        weight: /bold/.test(f[1]) ? '700' : '400', style: /italic/.test(f[1]) ? 'italic' : 'normal'
-      });
-      return face.load().then(function (ff) { document.fonts.add(ff); });
-    }).filter(Boolean);
-    return Promise.all(jobs).then(function () { CS.Text.clearCache(); });
+  function fontEntries(data) {
+    return Object.keys(data || {}).map(function (k) {
+      var p = k.split('|');
+      return { family: p[0], style: p[1], b64: data[k] };
+    });
+  }
+  function fontDesc(style) {
+    return { weight: /bold/.test(style) ? '700' : '400', style: /italic/.test(style) ? 'italic' : 'normal' };
   }
 
+  // Load bundled fonts into the document so canvas measuring and on-screen text match the PDF.
+  function loadFontData(data) {
+    if (!data || !window.FontFace) return Promise.resolve();
+    var jobs = fontEntries(data).map(function (f) {
+      var bin = atob(f.b64), buf = new Uint8Array(bin.length);
+      for (var i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+      var face = new FontFace(f.family, buf.buffer, fontDesc(f.style));
+      return face.load().then(function (ff) { document.fonts.add(ff); });
+    });
+    return Promise.all(jobs).then(function () { CS.Text.clearCache(); });
+  }
+  function loadFonts() { return loadFontData(window.CS_FONT_DATA); }
+
+  // @font-face rules (data URLs) for the fonts an SVG uses, so it renders correctly as an image
   function fontFaceCSS(svgText) {
-    var data = window.CS_FONT_DATA;
-    if (!data) return '';
     var css = '';
-    FONT_FILES.forEach(function (f) {
-      if (svgText.indexOf(f[0]) < 0) return;
-      css += '@font-face{font-family:"' + f[0] + '";font-weight:' + (/bold/.test(f[1]) ? 700 : 400) + ';font-style:' + (/italic/.test(f[1]) ? 'italic' : 'normal') +
-        ';src:url(data:font/ttf;base64,' + data[f[0] + '|' + f[1]] + ') format("truetype");}';
+    fontEntries(window.CS_FONT_DATA).forEach(function (f) {
+      if (svgText.indexOf(f.family) < 0) return;
+      var d = fontDesc(f.style);
+      css += '@font-face{font-family:"' + f.family + '";font-weight:' + d.weight + ';font-style:' + d.style +
+        ';src:url(data:font/ttf;base64,' + f.b64 + ') format("truetype");}';
     });
     return css;
   }
@@ -61,13 +62,11 @@
     };
   }
 
-  function registerPdfFonts(pdf) {
-    var data = window.CS_FONT_DATA;
-    if (!data) return;
-    FONT_FILES.forEach(function (f) {
-      var name = f[0] + '-' + f[1] + '.ttf';
-      pdf.addFileToVFS(name, data[f[0] + '|' + f[1]]);
-      pdf.addFont(name, f[0], f[1]);
+  function registerPdfFonts(pdf, data) {
+    fontEntries(data || window.CS_FONT_DATA).forEach(function (f) {
+      var name = f.family + '-' + f.style + '.ttf';
+      pdf.addFileToVFS(name, f.b64);
+      pdf.addFont(name, f.family, f.style);
     });
   }
 
@@ -129,6 +128,9 @@
 
   CS.Export = {
     loadFonts: loadFonts,
+    loadFontData: loadFontData,
+    fontFaceCSS: fontFaceCSS,
+    registerPdfFonts: registerPdfFonts,
     pageSVG: pageSVG,
     contentBBox: contentBBox,
     exportPDF: exportPDF,

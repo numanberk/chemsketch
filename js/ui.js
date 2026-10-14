@@ -503,6 +503,7 @@
       toast('Step ' + b.num + ' added – double-click it to write the caption');
     },
     flowRelayout: function () { CS.Flow.relayout(CS.page()); CS.commit(); toast('Flowchart re-arranged'); },
+    openChemWord: function () { window.open('chemword/index.html', '_blank'); },
     shortcuts: function () { dialog({ title: 'Keyboard shortcuts', body: SHORTCUTS_HTML, wide: true }); },
     about: function () { dialog({ title: 'About ChemSketch', body: ABOUT_HTML }); }
   });
@@ -641,7 +642,8 @@
       name: 'File', items: [
         ['New', 'newDoc', 'Ctrl+Alt+N'], ['Open…', 'open', 'Ctrl+O'], ['Save', 'save', 'Ctrl+S'], '-',
         ['Export PDF…', 'exportPDF', 'Ctrl+P'], ['Export SVG…', 'exportSVG'], ['Export PNG…', 'exportPNG'], ['Export MOL file', 'exportMOL'], '-',
-        ['Insert image…', 'insertImage'], ['Page setup…', 'pageSetup'], ['Document settings…', 'docSettings']
+        ['Insert image…', 'insertImage'], ['Page setup…', 'pageSetup'], ['Document settings…', 'docSettings'], '-',
+        ['Open ChemWord (documents with drawings)', 'openChemWord']
       ]
     },
     {
@@ -709,6 +711,7 @@
       el.innerHTML = '<button class="menu-btn">' + m.name + '</button><div class="menu-list"></div>';
       var list = el.querySelector('.menu-list');
       m.items.forEach(function (it) {
+        if (CS.embed && it[1] === 'openChemWord') return;
         if (it === '-') { list.insertAdjacentHTML('beforeend', '<div class="sep"></div>'); return; }
         var b = document.createElement('button');
         b.className = 'menu-item';
