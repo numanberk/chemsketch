@@ -104,11 +104,7 @@ function migrateDrawing(old, wPx, hPx) {
       continue;
     }
     const o = { id: CS.uid(), type: 'arrow', kind: KIND[r.kind] || 'forward', x1: r.x1 * K, y1: r.y1 * K, x2: r.x2 * K, y2: r.y2 * K, width: 0.6 };
-    if (r.cx != null) {
-      const dx = o.x2 - o.x1, dy = o.y2 - o.y1, l = Math.hypot(dx, dy) || 1;
-      const mx = (o.x1 + o.x2) / 2, my = (o.y1 + o.y2) / 2;
-      o.bend = (r.cx * K - mx) * (-dy / l) + (r.cy * K - my) * (dx / l);
-    }
+    if (r.cx != null) { o.cx = r.cx * K; o.cy = r.cy * K; } // keep the exact curve shape
     page.objects.push(o);
   }
   for (const t of old.texts || []) {
@@ -279,7 +275,8 @@ function openDrawing(fig, opts = {}) {
 function sendLoad() {
   Sketch.pending = false;
   $('#cdmWait').hidden = true;
-  frame.contentWindow.postMessage({ type: 'chemsketch:load', doc: Sketch.doc, wizard: !!Sketch.opts.wizard }, '*');
+  const isFlow = Sketch.opts.wizard || figPage(Sketch.doc).objects.some((o) => o.type === 'step');
+  frame.contentWindow.postMessage({ type: 'chemsketch:load', doc: Sketch.doc, wizard: !!Sketch.opts.wizard, title: isFlow ? 'Flowchart' : 'Structure' }, '*');
   frame.focus();
 }
 function closeDrawing() {

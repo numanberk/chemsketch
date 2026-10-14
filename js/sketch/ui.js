@@ -126,6 +126,9 @@
     var parts = id.split(':');
     var t = parts[0];
     if (t === 'panel') { showPanel(parts[1]); return; }
+    if (t === 'drawer') { showPanel(parts[1]); CS.emit('drawer', parts[1]); return; }
+    if (t === 'wizard') { CS.Flow.openWizard(); return; }
+    if (t === 'el') { state.element = parts[1]; t = 'element'; }
     state.tool = t;
     if (t === 'bond') state.bondType = { order: +parts[1], style: parts[2] };
     if (t === 'ring') {
@@ -141,7 +144,8 @@
     state.preview = null;
     CS.Editor.render();
     var def = TOOL_DEFS.filter(function (d) { return d.id === id; })[0];
-    status(def ? def.tip : (t === 'apparatus' ? 'Click on the page to place the equipment.' : t === 'template' ? 'Click on the page to place the structure.' : ''));
+    status((CS.UI.TIPS && CS.UI.TIPS[id]) || (def ? def.tip : (t === 'apparatus' ? 'Click on the page to place the equipment.' : t === 'template' ? 'Click on the page to place the structure.' : '')));
+    CS.emit('tool', id);
   }
   function toolKey(key, ev) {
     if (ev.ctrlKey || ev.metaKey || ev.altKey) return;
@@ -151,7 +155,11 @@
     if (k === 'f') { CS.Editor.fitPage(); ev.preventDefault(); }
   }
 
-  function status(msg) { var s = $('#status-msg'); if (s) s.textContent = msg || ''; }
+  function status(msg) {
+    var s = $('#status-msg');
+    if (s) s.textContent = msg || '';
+    CS.emit('tip', msg || '');
+  }
 
   // ------------------------------------------------------------ dialogs
   function dialog(o) {
@@ -1223,6 +1231,6 @@
 
   CS.UI = {
     init: init, setTool: setTool, toolKey: toolKey, dialog: dialog, prompt: prompt, toast: toast, showPanel: showPanel,
-    runAction: runAction, importText: importText, updateProps: updateProps
+    runAction: runAction, importText: importText, updateProps: updateProps, ICON: ICON, TOOL_DEFS: TOOL_DEFS
   };
 })(window.CS);

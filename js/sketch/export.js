@@ -37,12 +37,7 @@
     return css;
   }
 
-  function contentBBox(page) {
-    var list = [];
-    page.atoms.forEach(function (a) { list.push({ x: a.x - 8, y: a.y - 8, w: 16, h: 16 }); });
-    page.objects.forEach(function (o) { var b = CS.R.objBBox(o); if (b) list.push(b); });
-    return CS.bboxUnion(list);
-  }
+  function contentBBox(page) { return CS.R.contentBBox(page); }
 
   // Build a standalone SVG string of a page. opts: crop (bool), margin, embedFonts, background
   function pageSVG(page, opts) {

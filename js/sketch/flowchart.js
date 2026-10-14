@@ -167,72 +167,100 @@
   }
 
   // ------------------------------------------------------------ wizard
-  function presetOptions(sel) {
-    var s = '<option value="none"' + (sel === 'none' ? ' selected' : '') + '>— empty box (draw yourself) —</option>';
-    A.presets.forEach(function (p) { s += '<option value="' + p.id + '"' + (p.id === sel ? ' selected' : '') + '>' + CS.esc(p.name) + '</option>'; });
-    return s;
+  // labels a step's drawing shows (one per callout of its setup)
+  function labelSlots(st) {
+    var p = A.preset(st.preset);
+    return p ? p.callouts.map(function (c, i) { return { def: c.text, val: st.labels && st.labels[i] != null ? st.labels[i] : c.text }; }) : [];
+  }
+  function pickerHTML(sel) {
+    var s = '<div class="wz-picker"><div class="wz-picker-h">Choose the setup for this step</div><div class="wz-grid">';
+    A.presets.forEach(function (p) {
+      s += '<button class="wz-opt' + (p.id === sel ? ' on' : '') + '" data-pick="' + p.id + '">' + A.presetThumb(p, 70) + '<span>' + CS.esc(p.name) + '</span></button>';
+    });
+    s += '<button class="wz-opt' + (sel === 'none' ? ' on' : '') + '" data-pick="none"><div class="wz-blank">Empty box</div><span>Draw it yourself</span></button>';
+    return s + '</div></div>';
+  }
+  function seg(key, val, opts) {
+    return '<div class="wz-seg" role="group">' + opts.map(function (o) {
+      return '<button data-seg="' + key + '" data-v="' + o[0] + '"' + (String(val) === String(o[0]) ? ' class="on"' : '') + '>' + o[1] + '</button>';
+    }).join('') + '</div>';
   }
 
   function openWizard(initial) {
     var model = CS.clone(initial || {
-      title: '', author: '', cols: 2,
+      title: '', author: '', cols: 2, font: 'ChemSerif',
       steps: [{ preset: 'flask', caption: '', labels: ['round-bottom flask'] }, { preset: 'reflux', caption: '', labels: ['condenser', 'water bath'] }]
     });
+    var picking = -1; // index of the step whose setup picker is open
     var body = document.createElement('div');
     body.className = 'wizard';
     function renderBody() {
       var s = '<div class="wz-head">' + (CS.embed ? '' :
-        '<label>Title <input data-k="title" value="' + CS.esc(model.title || '') + '" placeholder="e.g. Synthesis of aspirin"></label>' +
-        '<label>Author <input data-k="author" value="' + CS.esc(model.author || '') + '" placeholder="your name"></label>') +
-        '<label>Columns <select data-k="cols">' + [1, 2, 3].map(function (n) { return '<option' + (model.cols === n ? ' selected' : '') + '>' + n + '</option>'; }).join('') + '</select></label>' +
-        '<label>Font <select data-k="font"><option value="ChemSerif"' + (model.font !== 'ChemSans' ? ' selected' : '') + '>Serif (Times-like)</option><option value="ChemSans"' + (model.font === 'ChemSans' ? ' selected' : '') + '>Sans (Arial-like)</option></select></label>' +
-        '</div><div class="wz-hint">Each step becomes a numbered box with an apparatus drawing, labels and an arrow to the next step. Formulas such as NaHCO3 or CaCl2 are subscripted automatically. Everything stays editable afterwards.</div><div class="wz-steps">';
+        '<label class="wz-f">Title <input data-k="title" value="' + CS.esc(model.title || '') + '" placeholder="e.g. Synthesis of aspirin"></label>' +
+        '<label class="wz-f">Author <input data-k="author" value="' + CS.esc(model.author || '') + '" placeholder="your name"></label>') +
+        '<div class="wz-f">Columns ' + seg('cols', model.cols, [[1, '1'], [2, '2'], [3, '3']]) + '</div>' +
+        '<div class="wz-f">Text ' + seg('font', model.font || 'ChemSerif', [['ChemSerif', 'Serif'], ['ChemSans', 'Sans']]) + '</div>' +
+        '</div><div class="wz-hint">One box per step, numbered and joined by arrows. Pick a setup picture, describe the step and adjust the labels on the drawing. Formulas like NaHCO3 become NaHCO₃. You can change everything afterwards.</div><div class="wz-steps">';
       model.steps.forEach(function (st, i) {
+        var pr = A.preset(st.preset);
         s += '<div class="wz-step" data-i="' + i + '">' +
-          '<div class="wz-num">' + (i + 1) + '.</div>' +
-          '<div class="wz-thumb">' + (st.preset && st.preset !== 'none' ? A.presetThumb(A.preset(st.preset), 64) : '<div class="wz-empty">empty</div>') + '</div>' +
-          '<div class="wz-fields"><select data-f="preset">' + presetOptions(st.preset || 'none') + '</select>' +
-          '<textarea data-f="caption" rows="3" placeholder="Describe this step…">' + CS.esc(st.caption || '') + '</textarea>' +
-          '<input data-f="labels" value="' + CS.esc((st.labels || []).join('; ')) + '" placeholder="labels on the drawing, separated by ;"></div>' +
-          '<div class="wz-btns"><button data-a="up" title="Move up">↑</button><button data-a="down" title="Move down">↓</button><button data-a="del" title="Remove">✕</button></div>' +
+          '<div class="wz-num">' + (i + 1) + '</div>' +
+          '<button class="wz-tile" data-a="pick" title="Change the setup">' +
+          (pr ? A.presetThumb(pr, 86) : '<div class="wz-blank">Empty box</div>') +
+          '<span class="wz-tname">' + CS.esc(pr ? pr.name : 'Empty box') + '</span><span class="wz-change">Change</span></button>' +
+          '<div class="wz-fields"><textarea data-f="caption" rows="3" placeholder="What happens in this step? e.g. Cyclohexene (5 g) and chloroform are added to the flask.">' + CS.esc(st.caption || '') + '</textarea>' +
+          (pr && pr.callouts.length ? '<div class="wz-labels"><span>Labels</span>' + labelSlots(st).map(function (l, k) {
+            return '<input data-lab="' + k + '" value="' + CS.esc(l.val) + '" placeholder="' + CS.esc(l.def) + '" title="Label on the drawing (empty = no label)">';
+          }).join('') + '</div>' : '') + '</div>' +
+          '<div class="wz-btns"><button data-a="up" title="Move up" aria-label="Move up"' + (i ? '' : ' disabled') + '>↑</button><button data-a="down" title="Move down" aria-label="Move down"' + (i < model.steps.length - 1 ? '' : ' disabled') + '>↓</button><button data-a="del" title="Remove this step" aria-label="Remove">✕</button></div>' +
+          (picking === i ? pickerHTML(st.preset || 'none') : '') +
           '</div>';
       });
-      s += '</div><button class="wz-add" data-a="add">+ Add step</button>';
+      s += '</div><button class="wz-add" data-a="add">+ Add a step</button>';
       body.innerHTML = s;
     }
     renderBody();
     body.addEventListener('input', function (e) {
-      var t = e.target, k = t.getAttribute('data-k');
-      if (k) { model[k] = k === 'cols' ? +t.value : t.value; return; }
-      var f = t.getAttribute('data-f'), stepEl = t.closest('.wz-step');
-      if (!f || !stepEl) return;
+      var t = e.target, k = t.getAttribute('data-k'), stepEl = t.closest('.wz-step');
+      if (k) { model[k] = t.value; return; }
+      if (!stepEl) return;
       var st = model.steps[+stepEl.getAttribute('data-i')];
-      if (f === 'labels') st.labels = t.value.split(';').map(function (x) { return x.trim(); });
-      else st[f] = t.value;
-    });
-    body.addEventListener('change', function (e) {
-      var t = e.target;
-      if (t.getAttribute('data-k') === 'cols') model.cols = +t.value;
-      if (t.getAttribute('data-f') === 'preset') {
-        var st = model.steps[+t.closest('.wz-step').getAttribute('data-i')];
-        st.preset = t.value;
-        var p = A.preset(t.value);
-        st.labels = p ? p.callouts.map(function (c) { return c.text; }) : [];
-        renderBody();
+      if (t.getAttribute('data-f') === 'caption') st.caption = t.value;
+      var lab = t.getAttribute('data-lab');
+      if (lab != null) {
+        st.labels = labelSlots(st).map(function (l) { return l.val; });
+        st.labels[+lab] = t.value;
       }
     });
     body.addEventListener('click', function (e) {
-      var a = e.target.getAttribute && e.target.getAttribute('data-a');
-      if (!a) return;
+      var sg = e.target.closest('[data-seg]');
+      if (sg) {
+        var key = sg.getAttribute('data-seg');
+        model[key] = key === 'cols' ? +sg.getAttribute('data-v') : sg.getAttribute('data-v');
+        return renderBody();
+      }
       var stepEl = e.target.closest('.wz-step'), i = stepEl ? +stepEl.getAttribute('data-i') : -1;
-      if (a === 'add') model.steps.push({ preset: 'none', caption: '', labels: [] });
-      if (a === 'del') model.steps.splice(i, 1);
-      if (a === 'up' && i > 0) model.steps.splice(i - 1, 0, model.steps.splice(i, 1)[0]);
-      if (a === 'down' && i < model.steps.length - 1) model.steps.splice(i + 1, 0, model.steps.splice(i, 1)[0]);
+      var pk = e.target.closest('[data-pick]');
+      if (pk) {
+        var st = model.steps[i], id = pk.getAttribute('data-pick'), p = A.preset(id);
+        st.preset = id;
+        st.labels = p ? p.callouts.map(function (c) { return c.text; }) : [];
+        picking = -1;
+        return renderBody();
+      }
+      var b = e.target.closest('[data-a]');
+      if (!b) return;
+      var a = b.getAttribute('data-a');
+      if (a === 'pick') picking = picking === i ? -1 : i;
+      if (a === 'add') { model.steps.push({ preset: 'none', caption: '', labels: [] }); picking = model.steps.length - 1; }
+      if (a === 'del') { model.steps.splice(i, 1); picking = -1; }
+      if (a === 'up' && i > 0) { model.steps.splice(i - 1, 0, model.steps.splice(i, 1)[0]); picking = -1; }
+      if (a === 'down' && i < model.steps.length - 1) { model.steps.splice(i + 1, 0, model.steps.splice(i, 1)[0]); picking = -1; }
       renderBody();
+      if (a === 'add') body.querySelector('.wz-step:last-child').scrollIntoView({ block: 'nearest' });
     });
     CS.UI.dialog({
-      title: 'Flowchart wizard', body: body, wide: true,
+      title: 'Flowchart', body: body, wide: true, noFocus: true,
       buttons: [
         { label: 'Cancel' },
         {

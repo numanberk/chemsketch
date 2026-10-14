@@ -686,6 +686,7 @@ $('.qa').addEventListener('click', (e) => {
   const b = e.target.closest('[data-cmd]');
   if (b) exec(b.dataset.cmd);
 });
+$('#qOpen').onclick = () => $('#fileIn').click();
 $('#qSave').onclick = () => saveFile(docName() + '.chemword.json', JSON.stringify(projectObj()));
 $('#qPdf').onclick = () => exportPDF();
 function showTab(name) {
@@ -699,10 +700,10 @@ $('#vZoomOut').onclick = () => $('#zOut').click();
 $('#vFit').onclick = () => $('#zFit').click();
 $('#v100').onclick = () => setZoom(1);
 document.addEventListener('keydown', (e) => {
-  if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === 's' && cdm.hidden) {
-    e.preventDefault();
-    $('#qSave').click();
-  }
+  if (!(e.ctrlKey || e.metaKey) || e.altKey || !cdm.hidden) return;
+  const k = e.key.toLowerCase();
+  if (k === 's') { e.preventDefault(); $('#qSave').click(); }
+  if (k === 'o') { e.preventDefault(); $('#fileIn').click(); }
 });
 
 $('#mFile').addEventListener('click', (e) => {
@@ -747,9 +748,30 @@ async function openAny(fl) {
   }
   return openProject(JSON.parse(new TextDecoder().decode(buf)), 'Project opened');
 }
+// Opening replaces the current document, so ask first when it has content.
+function openFile(fl) {
+  const go = () => openAny(fl).catch((x) => toast('Could not open that file: ' + ((x && x.message) || 'unknown format'), 5000));
+  const hasContent = (ed.innerText || '').trim() || ed.querySelector('figure.chem,img,table');
+  if (!hasContent) return go();
+  choose('Open ' + fl.name + '?', 'It replaces the document that is open now. Save this one first (Save in the title bar) if you want to keep it.', [
+    ['Open it', 'Your current document will be replaced.', go]
+  ]);
+}
 $('#fileIn').onchange = (e) => {
   const fl = e.target.files[0];
   e.target.value = '';
-  if (!fl) return;
-  openAny(fl).catch((x) => toast('Could not open that file: ' + ((x && x.message) || 'unknown format'), 5000));
+  if (fl) openFile(fl);
 };
+// drop a saved .docx / .pdf / .json (or a picture) onto the page
+scroller.addEventListener('dragover', (e) => { if (e.dataTransfer && [...e.dataTransfer.types].includes('Files')) e.preventDefault(); });
+scroller.addEventListener('drop', (e) => {
+  const fl = e.dataTransfer && e.dataTransfer.files[0];
+  if (!fl) return;
+  e.preventDefault();
+  if (/^image\//.test(fl.type)) {
+    const dt = new DataTransfer();
+    dt.items.add(fl);
+    $('#imgIn').files = dt.files;
+    $('#imgIn').dispatchEvent(new Event('change'));
+  } else openFile(fl);
+});

@@ -43,6 +43,15 @@ tests/smoke.cjs                             end-to-end smoke test (Playwright)
   - `CS.Doc`, `CS.state`, `CS.History`, `CS.commit()`: the model, the current state and undo.
   - `CS.Editor`: canvas tools. `CS.UI`: menus and panels. `CS.Flow`: the flowchart wizard and layout.
   - `CS.Export`: PDF/SVG/PNG export and font helpers.
+  - `CS.Studio` (`studio.js`): the compact drawing-window layout used when embedded (`?embed=1`).
+    It mirrors the original ChemWord drawing window and adds a right-hand drawer for templates,
+    glassware and properties:
+    - top bar: Done, title, fit note, undo, zoom, PNG/SVG, Cancel;
+    - a three-column tool palette;
+    - a dotted canvas with the document area as a dashed guide;
+    - a bottom bar with formula chips and actions for the selection.
+
+    Keep this window simple: new features go in the drawer or the bottom bar, not in more chrome.
 
   Coordinates are in **pt**. Every finished edit calls `CS.commit()`, which records undo,
   autosaves and re-renders.
@@ -56,10 +65,12 @@ tests/smoke.cjs                             end-to-end smoke test (Playwright)
   `DRAW[id]`, a one-page doc whose page is the figure size in pt. `figureSVG()` renders it with
   the ChemSketch engine, which ChemWord also loads.
   - The editor iframe protocol (`postMessage`):
-    - ChemWord → frame: `chemsketch:load {doc, wizard}`.
+    - ChemWord → frame: `chemsketch:load {doc, wizard, title}`.
     - frame → ChemWord: `chemsketch:ready`, `chemsketch:done {doc}`, `chemsketch:cancel`.
   - `migrateDrawing()` converts drawings saved by the first ChemWord version (atoms with `t`, arrows
-    with `kind`). Keep it so old documents still open.
+    with `kind`; curved arrows keep their exact control point as `cx`/`cy`). Keep it, along with
+    reading `chemword/docxml.sha256.txt` in old .docx files, so old saves (.docx, .pdf, .json) still
+    open. The smoke test covers this.
 - **Fonts are bundled** in `js/vendor/fonts.js` and `docfonts.js` as base64 TTF subsets, loaded with
   `FontFace` and embedded in PDFs. Screen and PDF use the same fonts, so layout matches exactly.
   - ChemSans/ChemSerif/ChemMono come from Liberation, DocSans from Carlito, DocSerif from Caladea

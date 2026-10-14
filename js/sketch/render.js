@@ -334,8 +334,14 @@
     return poly(pts, st.color, st.color, st.w * 0.5);
   }
 
+  // curved arrows are quadratic curves; the control point is either explicit (cx, cy) or
+  // `bend` pt away from the middle of the chord
   function arrowGeom(o) {
     var p0 = { x: o.x1, y: o.y1 }, p1 = { x: o.x2, y: o.y2 };
+    if (o.cx != null && o.cy != null) {
+      var cc = { x: o.cx, y: o.cy };
+      return { p0: p0, p1: p1, c: cc, curved: V.distToSeg(cc, p0, p1) > 0.5 };
+    }
     var d = V.norm(V.sub(p1, p0)), bend = o.bend || 0;
     var c = V.add(V.mid(p0, p1), V.mul(V.perp(d), bend));
     return { p0: p0, p1: p1, c: c, curved: Math.abs(bend) > 0.5 };
@@ -603,6 +609,27 @@
     }
   }
 
+  // tight bounding box of everything on a page (label boxes for atoms, not a fixed margin)
+  function contentBBox(page) {
+    var st = S(), g = Chem.graph(page), list = [], lw = st.lineWidth;
+    page.atoms.forEach(function (a) {
+      var l = atomLabel(g, a, st);
+      list.push(l ? CS.bboxUnion(l.boxes) : { x: a.x - lw, y: a.y - lw, w: 2 * lw, h: 2 * lw });
+      if (a.charge || a.radical || a.lonePairs) {
+        var r = st.fontSize * 0.95;
+        list.push({ x: a.x - r, y: a.y - r, w: 2 * r, h: 2 * r });
+      }
+    });
+    page.bonds.forEach(function (b) {
+      if (b.style === 'wedge' || b.style === 'hollow' || b.style === 'hash' || b.style === 'wavy') {
+        var x = g.atoms.get(b.b) || g.atoms.get(b.a), r = st.wedgeWidth / 2;
+        if (x) list.push({ x: x.x - r, y: x.y - r, w: 2 * r, h: 2 * r });
+      }
+    });
+    page.objects.forEach(function (o) { var b = objBBox(o); if (b) list.push(b); });
+    return CS.bboxUnion(list);
+  }
+
   function atomBBox(a) {
     var l = lastLabels.get(a.id);
     if (l) return CS.bboxUnion(l.boxes);
@@ -629,6 +656,7 @@
     renderObject: renderObject,
     renderMolecule: renderMolecule,
     objBBox: objBBox,
+    contentBBox: contentBBox,
     atomBBox: atomBBox,
     arrowGeom: arrowGeom,
     textLayout: textLayout,

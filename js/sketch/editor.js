@@ -58,8 +58,17 @@
   function render() {
     if (!svg) return;
     var page = CS.page(), st = state.doc.settings;
-    gPage.innerHTML = '<rect class="page-shadow" x="2" y="3" width="' + page.width + '" height="' + page.height + '"/>' +
-      '<rect class="page" x="0" y="0" width="' + page.width + '" height="' + page.height + '"/>';
+    if (CS.embed) {
+      // drawing window: dotted canvas, the area in the document shown as a dashed guide
+      var z = state.zoom;
+      gPage.innerHTML = '<defs><pattern id="st-dots" width="10" height="10" patternUnits="userSpaceOnUse"><circle cx="0.6" cy="0.6" r="' + CS.n(0.75 / z) + '" fill="#cdd4df"/></pattern></defs>' +
+        '<rect x="-5000" y="-5000" width="' + (page.width + 10000) + '" height="' + (page.height + 10000) + '" fill="url(#st-dots)"/>' +
+        '<rect class="page-guide" x="0" y="0" width="' + page.width + '" height="' + page.height + '" stroke-width="' + CS.n(1.2 / z) + '" stroke-dasharray="' + CS.n(6 / z) + ' ' + CS.n(4 / z) + '"/>' +
+        '<text class="page-guide-t" x="' + CS.n(3 / z) + '" y="' + CS.n(-5 / z) + '" font-size="' + CS.n(11 / z) + '">area in the document (100%)</text>';
+    } else {
+      gPage.innerHTML = '<rect class="page-shadow" x="2" y="3" width="' + page.width + '" height="' + page.height + '"/>' +
+        '<rect class="page" x="0" y="0" width="' + page.width + '" height="' + page.height + '"/>';
+    }
     if (st.showGrid) {
       var gs = st.gridSize || 10, s = '';
       for (var x = gs; x < page.width; x += gs) s += 'M' + x + ',0V' + page.height;
@@ -503,7 +512,7 @@
     updateCursor(p);
   }
   function hoverFor(tool, p) {
-    if (/^(bond|chain|ring|element|charge|eraser|text|template|radical|lonepair)$/.test(tool)) {
+    if (/^(bond|chain|ring|element|charge|eraser|text|template|radical|lonepair|label)$/.test(tool)) {
       var a = hitAtom(p);
       if (a) return 'a:' + a.id;
       var b = hitBond(p);
@@ -698,6 +707,7 @@
         var a = { x: o.x1, y: o.y1 }, b = { x: o.x2, y: o.y2 };
         var n = V.perp(V.norm(V.sub(b, a)));
         // the curve's midpoint is half-way to the control point
+        delete o.cx; delete o.cy;
         o.bend = 2 * V.dot(V.sub(p, V.mid(a, b)), n);
         if (Math.abs(o.bend) < 2) o.bend = 0;
       } else {
@@ -868,6 +878,16 @@
     if (lf) { a.el = el; delete a.label; } else a.label = el;
     return a;
   }
+
+  TOOLS.label = {
+    up: function (p, ev, page, d) {
+      var a = hitAtom(d.start);
+      if (a) return editAtomLabel(a);
+      var na = D.addAtom(page, d.start.x, d.start.y, 'C');
+      render();
+      editAtomLabel(na, true);
+    }
+  };
 
   TOOLS.charge = {
     up: function (p, ev, page, d) {
@@ -1072,12 +1092,13 @@
   TOOLS.pan = {};
 
   // ------------------------------------------------------------ inline editing
-  function editAtomLabel(atom) {
+  function editAtomLabel(atom, isNew) {
     var page = CS.page();
     var g = Chem.graph(page);
     var cur = atom.label || (atom.el === 'C' && !atom.showC ? '' : atom.el + (function () { var h = Chem.implicitH(g, atom); return h ? 'H' + (h > 1 ? h : '') : ''; })());
     openEditor({ x: atom.x - 20, y: atom.y - 9 }, 60, cur, false, function (val) {
       val = val.trim();
+      if (!val && isNew) { page.atoms = page.atoms.filter(function (x) { return x !== atom; }); return; }
       if (!val) { if (atom.label) delete atom.label; atom.el = 'C'; return; }
       var m = /^([A-Z][a-z]?)(?:H(\d*))?$/.exec(val);
       if (m && Chem.isElement(m[1])) {
@@ -1090,7 +1111,7 @@
         atom.label = val;
         delete atom.hCount;
       }
-    }, { atom: true });
+    }, { atom: true, newAtom: isNew ? atom : null });
   }
   function editObjectText(o, p, isNew) {
     var field = o.type === 'step' ? 'caption' : 'text';
@@ -1151,10 +1172,9 @@
     var e = editing;
     editing = null;
     e.el.remove();
-    if (e.info.isNew) {
-      var page = CS.page();
-      page.objects = page.objects.filter(function (x) { return x !== e.info.obj; });
-    }
+    var page = CS.page();
+    if (e.info.isNew) page.objects = page.objects.filter(function (x) { return x !== e.info.obj; });
+    if (e.info.newAtom) page.atoms = page.atoms.filter(function (x) { return x !== e.info.newAtom; });
     render();
   }
   function closeEditor() { if (editing) commitEdit(); }

@@ -12,10 +12,11 @@ server or enable GitHub Pages on this repository.
 
 - **Write** as in Word, using the **Home** tab: styles, fonts, bold/italic/underline, sub- and
   superscript, colours, alignment, lists, indents and line spacing.
-- **Insert → Structure** opens the drawing editor (ChemSketch) in a box at the cursor. Draw a
-  molecule, reaction or mechanism and press **Done**; click the drawing later to edit it again.
-- **Insert → Flowchart** opens the flowchart wizard. Pick an apparatus setup for each step and
-  write the captions; the result is placed in the document.
+- **Insert → Structure** opens the drawing window at the cursor. The palette on the left has
+  elements, bonds, rings, charges, arrows and glassware; formula and molecular weight show at the
+  bottom. Press **Done** to put the drawing in the document, and click it later to edit it again.
+- **Insert → Flowchart** opens the flowchart wizard. For each step, click the picture to choose a
+  setup, describe the step and adjust its labels; the result is placed in the document.
 - **Chemical formulas** are formatted as you type: CaCl2 → CaCl₂ and Na+ → Na⁺. One Ctrl+Z reverts
   a word, the **Formulas** button formats existing text, and **View → Format formulas while typing**
   turns it off.
@@ -24,8 +25,9 @@ server or enable GitHub Pages on this repository.
 - **Export PDF** (title bar, or **File**) produces a vector PDF with embedded fonts: sharp,
   selectable text and vector drawings. **File → Export as Word** saves a .docx with drawings as SVG,
   plus PNG for older Word versions.
-- **Reopening:** PDF and .docx exports carry the project inside them, so **File → Open** makes
-  everything editable again. **File → Save project** writes a `.json` file, and the document also
+- **Reopening saves:** PDF and .docx exports carry the project inside them, so opening one makes
+  everything editable again. Use the folder button in the title bar, **Ctrl+O**, **File → Open**,
+  or drag the file onto the page. This includes files saved by the first ChemWord version. **File → Save project** writes a `.json` file, and the document also
   autosaves in the browser.
 
 The drawing editor also runs on its own at `sketch.html` (**File → Open ChemSketch**), with

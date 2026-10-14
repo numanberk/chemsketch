@@ -211,7 +211,10 @@
     objs.forEach(function (o) { moveObj(o, dx, dy); });
   }
   function moveObj(o, dx, dy) {
-    if (o.type === 'arrow' || o.type === 'line') { o.x1 += dx; o.y1 += dy; o.x2 += dx; o.y2 += dy; }
+    if (o.type === 'arrow' || o.type === 'line') {
+      o.x1 += dx; o.y1 += dy; o.x2 += dx; o.y2 += dy;
+      if (o.cx != null) { o.cx += dx; o.cy += dy; }
+    }
     else if (o.type === 'callout') { o.ax += dx; o.ay += dy; o.tx += dx; o.ty += dy; }
     else if (o.type === 'connector') { /* derived */ }
     else { o.x += dx; o.y += dy; }
@@ -229,6 +232,7 @@
       if (o.type === 'arrow' || o.type === 'line') {
         var p1 = fn({ x: o.x1, y: o.y1 }), p2 = fn({ x: o.x2, y: o.y2 });
         o.x1 = p1.x; o.y1 = p1.y; o.x2 = p2.x; o.y2 = p2.y;
+        if (o.cx != null) { var cp = fn({ x: o.cx, y: o.cy }); o.cx = cp.x; o.cy = cp.y; }
         if (o.bend) o.bend *= s * ((info.flipX ? -1 : 1) * (info.flipY ? -1 : 1));
         if (o.width && info.scaleStroke) o.width *= s;
       } else if (o.type === 'callout') {

@@ -24,37 +24,34 @@
   }
 
   function embedded() {
-    document.body.classList.add('embed');
     var host = window.parent;
     function send(msg) { host.postMessage(msg, '*'); }
-    var quick = document.querySelector('.quick');
-    quick.innerHTML = '<span class="embed-note">Drawing for your document — the page is the area it fills</span>' +
-      '<button data-embed="cancel" title="Close without changes (Esc twice)">Cancel</button>' +
-      '<button data-embed="done" class="primary" title="Put the drawing into the document (Ctrl+Enter)">Done</button>';
-    function done() {
+    CS.Studio.build();
+    CS.Studio.done = function () {
       CS.Editor.closeEditor();
       var doc = CS.clone(CS.state.doc);
       doc.figPage = CS.state.pageIdx;
       send({ type: 'chemsketch:done', doc: doc });
-    }
-    quick.addEventListener('click', function (e) {
-      var b = e.target.closest('[data-embed]');
-      if (!b) return;
-      if (b.getAttribute('data-embed') === 'done') done();
-      else send({ type: 'chemsketch:cancel' });
-    });
+    };
+    CS.Studio.cancel = function () {
+      CS.Editor.closeEditor();
+      send({ type: 'chemsketch:cancel' });
+    };
     document.addEventListener('keydown', function (e) {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); done(); }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); CS.Studio.done(); }
     });
     window.addEventListener('message', function (e) {
       if (e.source !== host || !e.data || e.data.type !== 'chemsketch:load') return;
       try {
+        CS.Studio.closeDrawer();
         CS.Doc.load(e.data.doc);
         CS.state.pageIdx = Math.min(e.data.doc.figPage || 0, CS.state.doc.pages.length - 1);
-        CS.UI.setTool('select');
-        CS.UI.setTool('bond:1:plain');
-        CS.emit('change');
+        var page = CS.page();
+        var empty = !page.atoms.length && !page.objects.length;
+        CS.Studio.setTitle(e.data.title || (e.data.wizard ? 'Flowchart' : 'Structure'));
+        CS.UI.setTool(empty && !e.data.wizard ? 'bond:1:plain' : 'select');
         CS.History.reset();
+        CS.emit('change');
         CS.Editor.fitPage();
         if (e.data.wizard) CS.Flow.openWizard();
       } catch (err) {
