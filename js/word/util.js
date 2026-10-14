@@ -35,15 +35,19 @@ function docName() {
 }
 
 // Scripts are bundled in ../js/vendor and loaded on first use, so everything works offline.
+const _scripts = new Map();
 function loadScript(src) {
-  return new Promise((res, rej) => {
-    if ($(`script[src="${src}"]`)) return res();
-    const s = document.createElement('script');
-    s.src = src;
-    s.onload = res;
-    s.onerror = () => rej(new Error('could not load ' + src.split('/').pop()));
-    document.head.appendChild(s);
-  });
+  // one promise per script, so callers that ask at the same time all wait for the same load
+  if (!_scripts.has(src)) {
+    _scripts.set(src, new Promise((res, rej) => {
+      const s = document.createElement('script');
+      s.src = src;
+      s.onload = res;
+      s.onerror = () => { _scripts.delete(src); rej(new Error('could not load ' + src.split('/').pop())); };
+      document.head.appendChild(s);
+    }));
+  }
+  return _scripts.get(src);
 }
 
 /* ---------- saving files ---------- */

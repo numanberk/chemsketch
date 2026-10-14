@@ -69,6 +69,34 @@ function check(cond, msg) {
   await docx.saveAs(path.join(tmp, 'doc.docx'));
   check(fs.readFileSync(path.join(tmp, 'doc.docx')).slice(0, 2).toString() === 'PK', 'Word export');
 
+  // ---- Merge PDFs: two files, reordered, with a page selection
+  const made = await page.evaluate(() => {
+    const make = (pages) => {
+      const d = new jspdf.jsPDF({ unit: 'pt', format: 'a4' });
+      pages.forEach((t, i) => { if (i) d.addPage(); d.text(t, 80, 200); });
+      return d.output('datauristring').split(',')[1];
+    };
+    return [make(['FIRST']), make(['SECOND-1', 'SECOND-2'])];
+  });
+  fs.writeFileSync(path.join(tmp, 'a.pdf'), Buffer.from(made[0], 'base64'));
+  fs.writeFileSync(path.join(tmp, 'b.pdf'), Buffer.from(made[1], 'base64'));
+  await page.evaluate(() => Merge.open());
+  await page.setInputFiles('.mg-input', [path.join(tmp, 'a.pdf'), path.join(tmp, 'b.pdf')]);
+  await page.waitForFunction(() => [...document.querySelectorAll('.mg-meta')].filter((m) => /page/.test(m.textContent)).length === 2, null, { timeout: 20000 });
+  await page.click('.mg-item[data-i="1"] [data-mv="-1"]');
+  await page.fill('.mg-item[data-i="0"] [data-pages]', '2');
+  const [merged] = await Promise.all([page.waitForEvent('download', { timeout: 30000 }), page.click('[data-go]')]);
+  await merged.saveAs(path.join(tmp, 'merged.pdf'));
+  const texts = await page.evaluate(async (b64) => {
+    const bin = atob(b64), bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
+    const out = [];
+    for (let i = 1; i <= pdf.numPages; i++) out.push((await (await pdf.getPage(i)).getTextContent()).items.map((t) => t.str).join(''));
+    return out;
+  }, fs.readFileSync(path.join(tmp, 'merged.pdf')).toString('base64'));
+  check(texts.join('|') === 'SECOND-2|FIRST', 'Merge PDFs keeps the chosen order and pages');
+
   // ---- opening a save from the first ChemWord version (old drawing format)
   const old = {
     v: 1, opts: { pn: false },

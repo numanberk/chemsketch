@@ -728,6 +728,7 @@ $('#mFile').addEventListener('click', (e) => {
   else if (f === 'save') saveFile(docName() + '.chemword.json', JSON.stringify(projectObj()));
   else if (f === 'pdf') exportPDF();
   else if (f === 'docx') exportDOCX();
+  else if (f === 'merge') Merge.open();
   else if (f === 'chemsketch') window.open('sketch.html', '_blank');
 });
 $('#optPn').addEventListener('change', (e) => { OPTS.pn = e.target.checked; drawPages(NPAGES); save(); });

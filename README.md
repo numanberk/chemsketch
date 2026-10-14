@@ -25,6 +25,9 @@ server or enable GitHub Pages on this repository.
 - **Export PDF** (title bar, or **File**) produces a vector PDF with embedded fonts: sharp,
   selectable text and vector drawings. **File → Export as Word** saves a .docx with drawings as SVG,
   plus PNG for older Word versions.
+- **Merge PDFs** (**File → Merge PDFs…**): add PDF files, and optionally the document you are
+  working on. Put them in order by dragging the cards (each shows a preview of its first page) or
+  with ↑ ↓, optionally choose pages (for example `1-3, 5`), and save one combined PDF.
 - **Reopening saves:** PDF and .docx exports carry the project inside them, so opening one makes
   everything editable again. Use the folder button in the title bar, **Ctrl+O**, **File → Open**,
   or drag the file onto the page. This includes files saved by the first ChemWord version. **File → Save project** writes a `.json` file, and the document also
@@ -99,6 +102,7 @@ See `CLAUDE.md` for how the pieces fit together and how to test changes.
 
 - [OpenChemLib JS](https://github.com/cheminfo/openchemlib-js) (BSD-3-Clause): SMILES/MOL parsing, 2D coordinates, properties, CIP.
 - [jsPDF](https://github.com/parallax/jsPDF) and [svg2pdf.js](https://github.com/yWorks/svg2pdf.js) (MIT): PDF export.
+- [pdf-lib](https://github.com/Hopding/pdf-lib) (MIT) and [pdf.js](https://github.com/mozilla/pdf.js) (Apache-2.0): merging PDFs and page previews.
 - [JSZip](https://github.com/Stuk/jszip) (MIT) and [mammoth](https://github.com/mwilliamson/mammoth.js) (BSD-2-Clause): Word export and import in ChemWord.
 - Fonts, subset and renamed:
   - Liberation Sans / Serif / Mono → ChemSans / ChemSerif / ChemMono;

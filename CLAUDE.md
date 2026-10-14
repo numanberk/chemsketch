@@ -56,7 +56,7 @@ tests/smoke.cjs                             end-to-end smoke test (Playwright)
   Coordinates are in **pt**. Every finished edit calls `CS.commit()`, which records undo,
   autosaves and re-renders.
 - **ChemWord** (`js/word/`) is modern JS, with top-level `const`/`function` shared across files
-  in load order: util → history → drawings → editor → formulas → pdf → docx → main. Layout is in
+  in load order: util → history → drawings → editor → formulas → pdf → docx → merge → main. Layout is in
   CSS **px** (A4 = 794 × 1123 px; `PX2PT = 0.75`).
   - Structural changes (inserting or removing blocks, drawings, tables, pictures) must call
     `History.flush()` before the change and `History.record()` after it, or call `afterEdit(true)`.
@@ -77,6 +77,10 @@ tests/smoke.cjs                             end-to-end smoke test (Playwright)
     and ChemSymbols from DejaVu.
   - Renamed subsets are required by the OFL/Vera licences. To change coverage, re-subset with
     `fontTools` (`pyftsubset`-style, renaming the family) and regenerate the JS files.
+- **Merge PDFs** (`js/word/merge.js`, File → Merge PDFs…): pdf-lib copies pages and pdf.js
+  renders first-page previews. Both are lazy-loaded from `js/vendor/` with `loadScript()`. The
+  pdf.js worker is loaded as a plain script first, so pdf.js runs on the main thread (no Web Worker,
+  which `file://` would block).
 - **PDF export:**
   - ChemSketch uses jsPDF + svg2pdf on its own SVG.
   - ChemWord (`js/word/pdf.js`) walks the laid-out DOM: word positions come from `Range` rects,
